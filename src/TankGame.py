@@ -4,7 +4,7 @@ from pygame.locals import *
 from sys import exit
 from gameobjects.vector2 import Vector2
 
-pygame.init()
+# pygame.init()
 #游戏实体
 class GameObject(object):
     def __init__(self):
@@ -13,11 +13,11 @@ class GameObject(object):
         self.width=None
         self.height=None
         self.isAlive=True
-        self.sprite=None
+        self.img=None
 
     def setImage(self,imgPath):
-        self.sprite=pygame.image.load(imgPath)
-        self.width,self.height=self.sprite.get_size()
+        self.img=pygame.image.load(imgPath)
+        self.width,self.height=self.img.get_size()
 
     def update(self):
         pass
@@ -38,23 +38,23 @@ class Map(GameObject):
         super().__init__()
         self.x=x
         self.y=y
-        self.sprite=wallSprite[type-1]
+        self.img=wallimg[type-1]
         self.type=type
-        self.width,self.height=self.sprite.get_size()
+        self.width,self.height=self.img.get_size()
 
     #用于检测在此方块上的碰撞
     def isCrash(self,other):
         pass
 
-    def setImage(self,sprite):
-        self.sprite=sprite
-        self.width=sprite
+    def setImage(self,img):
+        self.img=img
+        self.width=img
 
     #在surface上绘制
     def display(self):
         if self.type == 0:
             return
-        surface.blit(self.sprite,(self.x,self.y))
+        surface.blit(self.img,(self.x,self.y))
 
     def update(self):
         pass
@@ -71,7 +71,7 @@ class Player(GameObject):
         self.y=y
         self.diraction=Vector2(0,0)    #坦克朝向
         self.needMove=False
-        self.speed=8
+        self.speed=30
         self.life=100
         #self.lifeFrame=        #血条
 
@@ -113,16 +113,16 @@ class Player(GameObject):
 
     def display(self):
 
-        surface.blit(self.sprite,(self.x,self.y))
+        surface.blit(self.img,(self.x,self.y))
 
 #边界限制
 def borderLimit(eneity):
     if eneity.x > surface_WIDTH - eneity.width:
         eneity.x = surface_WIDTH - eneity.width
-    if eneity.x < - eneity.width:
-        eneity.x = - eneity.width
+    if eneity.x < 0:
+        eneity.x = 0
     if eneity.y > surface_HEIGHT- eneity.height:
-        eneity.y = surface_HEIGHT- eneity.height
+        eneity.y = surface_HEIGHT- eneity.heightd
     if eneity.y < 0:
         eneity.y = 0
 
@@ -174,17 +174,17 @@ def init():
     i = 1
     # 获取墙图片
     while i <= wallNum:
-        sprite = pygame.image.load("../resources/img/wall_%d.png" % (i)).convert_alpha()
-        wallSprite.append(sprite)
+        img = pygame.image.load("../resources/img/wall_%d.png" % (i)).convert_alpha()
+        wallimg.append(img)
         i += 1
 
 
 #总更新方法
 def update():
-
     player.update()
 
 def display():
+    surface.blit(background, (0, 0))
     for mps in mapList:
         mps.display()
     player.display()
@@ -205,8 +205,8 @@ surface_HEIGHT=400  #屏幕高度
 
 FPS=60          #最大帧数
 mapBlockLenth=40 #地图块大小
-wallSprite=[]   #障碍物精灵组
-tankSprite=[]   #坦克精灵组
+wallimg=[]   #障碍物精灵组
+tankimg=[]   #坦克精灵组
 wallNum=6      #障碍物总数
 tankNum=2       #坦克总数
 
@@ -251,7 +251,7 @@ while True:
     #         surface.blit(background, (x, y))
     # clock.tick(60)
     #surface.blit(background,(0,0))
-    # surface.blit(ikongSprite,(0,0))
+    # surface.blit(ikongimg,(0,0))
     # 绘制地图
     # for mps in mapList:
     #     mps.drawWall(surface)
