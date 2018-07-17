@@ -3,30 +3,7 @@ import pygame,os,sys
 from pygame.locals import *
 from sys import exit
 
-SCREEN_WIDTH=600
-SCREEN_HEIGHT=400
-bgColor = (55,45,85)
-
 pygame.init()
-screen=pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT),0,32)
-background=pygame.image.load("../resources/img/grass.png").convert()
-clock=pygame.time.Clock()
-
-mapBlockLenth=40 #地图块大小
-wallSprite=[]   #障碍物精灵组
-tankSprite=[]   #坦克精灵组
-wallNum=20      #障碍物总数
-tankNum=2       #坦克总数
-
-#初始化
-def init():
-    i = 1
-    # 获取墙图片
-    while i <= wallNum:
-        sprite = pygame.image.load("../resources/img/walls_%d.png" % (i)).convert_alpha()
-        wallSprite.append(sprite)
-        i += 1
-    i = 1
 
 # #获取坦克图片
 # while i<=tankNum:
@@ -67,12 +44,6 @@ class GameObject(object):
     def isCrash(self,other):
         pass
 
-    #在screen上绘制
-    # def drawWall(self,screen):
-    #     if self.type == 0:
-    #         return
-    #     screen.blit(self.sprite,(self.x,self.y))
-    #
     def __str__(self):
         return "坐标(%d,%d),名称%s"%(self.x,self.y,self)
 
@@ -116,6 +87,48 @@ class Map(GameObject):
 #地图测试
 clock=pygame.time.Clock()
 #地块类型表
+
+
+#获取地图表
+def getList(Tlist,Tarray):
+    blockLen=len(Tarray) #地图表长度
+    i,j=0,0
+    #获取地图表
+    while i<blockLen:
+        while j<len(Tarray[i]):
+            mp=Map(j*mapBlockLenth,i*mapBlockLenth,Tarray[i][j])
+            Tlist.append(mp)
+            j+=1
+        j=0
+        i+=1
+
+getList(mapList,mapArrayIndex)
+#绘制背景地图
+screen.blit(background,(0,0))
+for mps in mapList:
+    mps.setImage(screen)
+    print(mps)
+SCREEN_WIDTH=600
+SCREEN_HEIGHT=400
+bgColor = (55,45,85)
+
+screen=pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT),0,32)
+background=pygame.image.load("../resources/img/grass.png").convert()
+clock=pygame.time.Clock()
+#初始化
+def init():
+    i = 1
+    # 获取墙图片
+    while i <= wallNum:
+        sprite = pygame.image.load("../resources/img/walls_%d.png" % (i)).convert_alpha()
+        wallSprite.append(sprite)
+        i += 1
+    i = 1
+mapBlockLenth=40 #地图块大小
+wallSprite=[]   #障碍物精灵组
+tankSprite=[]   #坦克精灵组
+wallNum=20      #障碍物总数
+tankNum=2       #坦克总数
 mapArrayIndex=[
     [0,1,0,0,0,9,0,9,0,0,0,3,2,0,0,0,8,0,0,0],
     [0,0,0,0,2,0,8,0,0,0,0,0,0,1,12,0,0,0,3,0],
@@ -130,30 +143,6 @@ mapArrayIndex=[
     [0,0,0,1,12,0,0,0,3,0,0,0,3,1,0,0,0,7,0,11],
     ]
 mapList=[]
-
-#获取地图表
-def getList(Tlist,Tarray,mapORtank):
-    blockLen=len(Tarray) #地图表长度
-    i,j=0,0
-    #获取地图表
-    while i<blockLen:
-        while j<len(Tarray[i]):
-            mp=Map(j*mapBlockLenth,i*mapBlockLenth,Tarray[i][j])
-            Tlist.append(mp)
-            j+=1
-        j=0
-        i+=1
-
-getList(mapList,mapArrayIndex,0)
-#绘制背景地图
-screen.blit(background,(0,0))
-for mps in mapList:
-    mps.drawWall(screen)
-    print(mps)
-for tk in tankList:
-    tk.drawWall(screen)
-    print(tk)
-
 while True:
     for event in pygame.event.get():
         if event.type==QUIT:
@@ -179,6 +168,4 @@ while True:
 
     for mps in mapList:
         mps.drawWall(screen)
-    for tk in tankList:
-        tk.drawWall(screen)
     pygame.display.update()
