@@ -69,9 +69,10 @@ class Player(GameObject):
         super().setImage("../resources/img/tank_1.png")
         self.x=x
         self.y=y
-        self.diraction=Vector2(0,0)    #坦克朝向
+        #self.diraction=Vector2(0,-1)
+        self.diraction = 1      #坦克朝向 1上2右3下4左
         self.needMove=False
-        self.speed=8
+        self.speed=100
         self.life=100
         #self.lifeFrame=        #血条
 
@@ -85,27 +86,59 @@ class Player(GameObject):
         pass
 
     def update(self):
-        pressedKey = pygame.key.get_pressed()
-        if pressedKey:
-            if pressedKey[K_a]:
-                self.diraction.x = -1
-                self.needMove=True
-            if pressedKey[K_d]:
-                self.diraction.x = 1
-                self.needMove = True
-            if pressedKey[K_w]:
-                self.diraction.y = -1
-                self.needMove = True
-            if pressedKey[K_s]:
-                self.diraction.y = 1
-                self.needMove = True
-        else:
-            self.x=0
-            self.y=0
-            self.needMove=False
-        self.diraction.normalise()
-        self.x += self.diraction.x * self.speed * timePassedSecond
-        self.y += self.diraction.y * self.speed * timePassedSecond
+        pressedKey = pygame.key.get_pressed()   #获取按键
+        moveDir=Vector2(0,0)    #移动方向
+        if pressedKey[K_a]:
+            moveDir.x = -1
+            if self.diraction == 1 :
+                self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            elif self.diraction == 2:
+                self.sprite = pygame.transform.rotate(self.sprite, 180.)
+            elif self.diraction == 3:
+                self.sprite = pygame.transform.rotate(self.sprite, -90.)
+
+            self.diraction = 4
+            self.needMove=True
+        elif pressedKey[K_d]:
+            moveDir.x = 1
+            if self.diraction == 1 :
+                self.sprite = pygame.transform.rotate(self.sprite, -90.)
+            elif self.diraction == 3:
+                self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            elif self.diraction == 4:
+                self.sprite = pygame.transform.rotate(self.sprite, 180.)
+
+            self.diraction=2
+            self.needMove = True
+        elif pressedKey[K_w]:
+            moveDir.y = -1
+            if self.diraction == 4 :
+                self.sprite = pygame.transform.rotate(self.sprite, -90.)
+            elif self.diraction == 2:
+                self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            elif self.diraction == 3:
+                self.sprite = pygame.transform.rotate(self.sprite, 180.)
+
+            self.diraction=1
+            self.needMove = True
+        elif pressedKey[K_s]:
+            moveDir.y = 1
+            if self.diraction == 1 :
+                self.sprite = pygame.transform.rotate(self.sprite, 180.)
+            elif self.diraction == 2:
+                self.sprite = pygame.transform.rotate(self.sprite, -90.)
+            elif self.diraction == 4:
+                self.sprite = pygame.transform.rotate(self.sprite, 90.)
+
+            self.diraction=3
+            self.needMove = True
+        # else:
+        #     self.x=0
+        #     self.y=0
+        #     self.needMove=False
+        moveDir.normalise()
+        self.x += moveDir.x * self.speed * timePassedSecond
+        self.y += moveDir.y * self.speed * timePassedSecond
         borderLimit(self)
 
     def changWeapon(self):
@@ -119,8 +152,8 @@ class Player(GameObject):
 def borderLimit(eneity):
     if eneity.x > surface_WIDTH - eneity.width:
         eneity.x = surface_WIDTH - eneity.width
-    if eneity.x < - eneity.width:
-        eneity.x = - eneity.width
+    if eneity.x < 0:
+        eneity.x = 0
     if eneity.y > surface_HEIGHT- eneity.height:
         eneity.y = surface_HEIGHT- eneity.height
     if eneity.y < 0:
@@ -131,6 +164,8 @@ def eventListener():
     for event in pygame.event.get():
         if event.type == QUIT:
             exit()
+        if event.type == KEYDOWN:
+            pass
         # if event.type == MOUSEBUTTONDOWN:  # 按下鼠标触发
         #     left, wheel, right = pygame.mouse.get_pressed()
         #     if left == 1:
@@ -181,10 +216,10 @@ def init():
 
 #总更新方法
 def update():
-
     player.update()
 
 def display():
+    surface.blit(background, (0, 0))
     for mps in mapList:
         mps.display()
     player.display()
