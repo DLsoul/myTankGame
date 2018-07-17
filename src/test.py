@@ -117,12 +117,13 @@ def getList(Tlist,Tarray):
 #初始化
 def init():
     i = 1
-    # 获取墙图片
-    while i <= wallNum:
-        sprite = pygame.image.load("../resources/img/wall_%d.png" % (i)).convert_alpha()
-        wallSprite.append(sprite)
-        i += 1
-    i = 1
+    # i = 1
+    # # 获取墙图片
+    # while i <= wallNum:
+    #     sprite = pygame.image.load("../resources/img/wall_%d.png" % (i)).convert_alpha()
+    #     wallSprite.append(sprite)
+    #     i += 1
+    # i = 1
 
 surface_WIDTH=600   #屏幕宽度
 surface_HEIGHT=400  #屏幕高度
@@ -146,6 +147,8 @@ mapArrayIndex=[
     [0,0,2,1,6,0,0,5,0,4],
     [0,0,0,1,2,0,0,0,3,0,0,0,3,1,0,0,0,1,0,1],
     ]
+# mapArrayIndex = []
+
 mapList=[]
 init()
 getList(mapList,mapArrayIndex)
@@ -159,24 +162,6 @@ while True:
     for event in pygame.event.get():
         if event.type==QUIT:
             exit()
-
-        # if event.type == VIDEORESIZE:
-        #     surface_SIZE = event.size
-        #     surface = pygame.display.set_mode(surface_SIZE, RESIZABLE, 32)
-        #     pygame.display.set_caption("Window resized to" + str(event.size))
-    # surfaceWidth, surfaceHeight = surface_SIZE
-    #
-    # # 重新填满窗口
-    # for y in range(0, surfaceHeight, background.get_height()):
-    #     for x in range(0, surfaceWidth, background.get_width()):
-    #         surface.blit(background, (x, y))
-    # clock.tick(60)
-    #surface.blit(background,(0,0))
-    # surface.blit(ikongSprite,(0,0))
-    # 绘制地图
-    # for mps in mapList:
-    #     mps.drawWall(surface)
-    #     print(mp)
 
     for mps in mapList:
         mps.display(surface)
