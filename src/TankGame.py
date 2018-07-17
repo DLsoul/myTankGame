@@ -350,10 +350,10 @@ def random_map():
         mapRow =[]
         j = 1
         while j<=15:
-            if random.random()<=0.6:
+            if random.random()<=0.7:
                 mapRow.append(0)
             else:
-                mapRow.append(random.randint(1,6))
+                mapRow.append(random.randint(1,12))
             j+=1
         generated_map.append(mapRow)
         i+=1
@@ -418,7 +418,7 @@ FPS=60          #最大帧数
 mapBlockLenth=40 #地图块大小
 wallSprite=[]   #障碍物精灵组
 tankSprite=[]   #坦克精灵组
-wallNum=6      #障碍物总数
+wallNum=12      #障碍物总种类
 tankNum=2       #坦克总数
 
 player=None     #玩家
