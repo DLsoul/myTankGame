@@ -4,7 +4,7 @@ from pygame.locals import *
 from sys import exit
 from gameobjects.vector2 import Vector2
 
-# pygame.init()
+pygame.init()
 #游戏实体
 class GameObject(object):
     def __init__(self):
@@ -13,11 +13,11 @@ class GameObject(object):
         self.width=None
         self.height=None
         self.isAlive=True
-        self.img=None
+        self.sprite=None
 
     def setImage(self,imgPath):
-        self.img=pygame.image.load(imgPath)
-        self.width,self.height=self.img.get_size()
+        self.sprite=pygame.image.load(imgPath)
+        self.width,self.height=self.sprite.get_size()
 
     def update(self):
         pass
@@ -38,23 +38,23 @@ class Map(GameObject):
         super().__init__()
         self.x=x
         self.y=y
-        self.img=wallimg[type-1]
+        self.sprite=wallSprite[type-1]
         self.type=type
-        self.width,self.height=self.img.get_size()
+        self.width,self.height=self.sprite.get_size()
 
     #用于检测在此方块上的碰撞
     def isCrash(self,other):
         pass
 
-    def setImage(self,img):
-        self.img=img
-        self.width=img
+    def setImage(self,sprite):
+        self.sprite=sprite
+        self.width=sprite
 
     #在surface上绘制
     def display(self):
         if self.type == 0:
             return
-        surface.blit(self.img,(self.x,self.y))
+        surface.blit(self.sprite,(self.x,self.y))
 
     def update(self):
         pass
@@ -69,9 +69,10 @@ class Player(GameObject):
         super().setImage("../resources/img/tank_1.png")
         self.x=x
         self.y=y
-        self.diraction=Vector2(0,0)    #坦克朝向
+        #self.diraction=Vector2(0,-1)
+        self.diraction = 1      #坦克朝向 1上2右3下4左
         self.needMove=False
-        self.speed=30
+        self.speed=100
         self.life=100
         #self.lifeFrame=        #血条
 
@@ -85,27 +86,59 @@ class Player(GameObject):
         pass
 
     def update(self):
-        pressedKey = pygame.key.get_pressed()
-        if pressedKey:
-            if pressedKey[K_a]:
-                self.diraction.x = -1
-                self.needMove=True
-            if pressedKey[K_d]:
-                self.diraction.x = 1
-                self.needMove = True
-            if pressedKey[K_w]:
-                self.diraction.y = -1
-                self.needMove = True
-            if pressedKey[K_s]:
-                self.diraction.y = 1
-                self.needMove = True
-        else:
-            self.x=0
-            self.y=0
-            self.needMove=False
-        self.diraction.normalise()
-        self.x += self.diraction.x * self.speed * timePassedSecond
-        self.y += self.diraction.y * self.speed * timePassedSecond
+        pressedKey = pygame.key.get_pressed()   #获取按键
+        moveDir=Vector2(0,0)    #移动方向
+        if pressedKey[K_a]:
+            moveDir.x = -1
+            if self.diraction == 1 :
+                self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            elif self.diraction == 2:
+                self.sprite = pygame.transform.rotate(self.sprite, 180.)
+            elif self.diraction == 3:
+                self.sprite = pygame.transform.rotate(self.sprite, -90.)
+
+            self.diraction = 4
+            self.needMove=True
+        elif pressedKey[K_d]:
+            moveDir.x = 1
+            if self.diraction == 1 :
+                self.sprite = pygame.transform.rotate(self.sprite, -90.)
+            elif self.diraction == 3:
+                self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            elif self.diraction == 4:
+                self.sprite = pygame.transform.rotate(self.sprite, 180.)
+
+            self.diraction=2
+            self.needMove = True
+        elif pressedKey[K_w]:
+            moveDir.y = -1
+            if self.diraction == 4 :
+                self.sprite = pygame.transform.rotate(self.sprite, -90.)
+            elif self.diraction == 2:
+                self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            elif self.diraction == 3:
+                self.sprite = pygame.transform.rotate(self.sprite, 180.)
+
+            self.diraction=1
+            self.needMove = True
+        elif pressedKey[K_s]:
+            moveDir.y = 1
+            if self.diraction == 1 :
+                self.sprite = pygame.transform.rotate(self.sprite, 180.)
+            elif self.diraction == 2:
+                self.sprite = pygame.transform.rotate(self.sprite, -90.)
+            elif self.diraction == 4:
+                self.sprite = pygame.transform.rotate(self.sprite, 90.)
+
+            self.diraction=3
+            self.needMove = True
+        # else:
+        #     self.x=0
+        #     self.y=0
+        #     self.needMove=False
+        moveDir.normalise()
+        self.x += moveDir.x * self.speed * timePassedSecond
+        self.y += moveDir.y * self.speed * timePassedSecond
         borderLimit(self)
 
     def changWeapon(self):
@@ -113,7 +146,7 @@ class Player(GameObject):
 
     def display(self):
 
-        surface.blit(self.img,(self.x,self.y))
+        surface.blit(self.sprite,(self.x,self.y))
 
 #边界限制
 def borderLimit(eneity):
@@ -131,6 +164,8 @@ def eventListener():
     for event in pygame.event.get():
         if event.type == QUIT:
             exit()
+        if event.type == KEYDOWN:
+            pass
         # if event.type == MOUSEBUTTONDOWN:  # 按下鼠标触发
         #     left, wheel, right = pygame.mouse.get_pressed()
         #     if left == 1:
@@ -174,8 +209,8 @@ def init():
     i = 1
     # 获取墙图片
     while i <= wallNum:
-        img = pygame.image.load("../resources/img/wall_%d.png" % (i)).convert_alpha()
-        wallimg.append(img)
+        sprite = pygame.image.load("../resources/img/wall_%d.png" % (i)).convert_alpha()
+        wallSprite.append(sprite)
         i += 1
 
 
@@ -205,8 +240,8 @@ surface_HEIGHT=400  #屏幕高度
 
 FPS=60          #最大帧数
 mapBlockLenth=40 #地图块大小
-wallimg=[]   #障碍物精灵组
-tankimg=[]   #坦克精灵组
+wallSprite=[]   #障碍物精灵组
+tankSprite=[]   #坦克精灵组
 wallNum=6      #障碍物总数
 tankNum=2       #坦克总数
 
@@ -251,7 +286,7 @@ while True:
     #         surface.blit(background, (x, y))
     # clock.tick(60)
     #surface.blit(background,(0,0))
-    # surface.blit(ikongimg,(0,0))
+    # surface.blit(ikongSprite,(0,0))
     # 绘制地图
     # for mps in mapList:
     #     mps.drawWall(surface)

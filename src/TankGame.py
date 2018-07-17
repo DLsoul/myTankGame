@@ -1,4 +1,4 @@
-
+import random
 import pygame,os,sys
 from pygame.locals import *
 from sys import exit
@@ -10,14 +10,14 @@ class GameObject(object):
     def __init__(self):
         self.x=None
         self.y=None
-        self.width=None
-        self.height=None
+        self.width=40
+        self.height=40
         self.isAlive=True
         self.sprite=None
 
     def setImage(self,imgPath):
         self.sprite=pygame.image.load(imgPath)
-        self.width,self.height=self.sprite.get_size()
+        # self.width,self.height=self.sprite.get_size()
 
     def update(self):
         pass
@@ -69,15 +69,33 @@ class Player(GameObject):
         super().setImage("../resources/img/tank_1.png")
         self.x=x
         self.y=y
-        #self.diraction=Vector2(0,-1)
-        self.diraction = 1      #坦克朝向 1上2右3下4左
+        #self.direction=Vector2(0,-1)
+        self.direction = 1      #坦克朝向 1上2右3下4左
         self.needMove=False
         self.speed=100
         self.life=100
         #self.lifeFrame=        #血条
 
     def fire(self):
-        pass
+        # xSpeed = 0
+        # ySpeed = 0
+        # if(self.direction == 1):
+        #     xSpeed = 0
+        #     ySpeed = -5
+        # elif(self.direction == 2):
+        #     xSpeed = 5
+        #     ySpeed = 0
+        # elif(self.direction == 3):
+        #     xSpeed = 0
+        #     ySpeed = 5
+        # elif(self.direction == 4):
+        #     xSpeed = -5
+        #     ySpeed = 0
+        bullet = Bullet(self.x,self.y,self.width,self.height,self.direction)
+        # bullet.setImage("../resources/img/bullet_2.png")
+        # bullet.sprite = pygame.transform.rotate(bullet.sprite, 90.)
+        # bullet.damage = random.randint(5,10)
+        player_bullets.append(bullet)
 
     def hurt(self):
         pass
@@ -86,51 +104,53 @@ class Player(GameObject):
         pass
 
     def update(self):
+        # print("timePassed",timePassed)
         pressedKey = pygame.key.get_pressed()   #获取按键
         moveDir=Vector2(0,0)    #移动方向
         if pressedKey[K_a]:
             moveDir.x = -1
-            if self.diraction == 1 :
+            player_bullets.clear()
+            if self.direction == 1 :
                 self.sprite = pygame.transform.rotate(self.sprite, 90.)
-            elif self.diraction == 2:
+            elif self.direction == 2:
                 self.sprite = pygame.transform.rotate(self.sprite, 180.)
-            elif self.diraction == 3:
+            elif self.direction == 3:
                 self.sprite = pygame.transform.rotate(self.sprite, -90.)
 
-            self.diraction = 4
+            self.direction = 4
             self.needMove=True
         elif pressedKey[K_d]:
             moveDir.x = 1
-            if self.diraction == 1 :
+            if self.direction == 1 :
                 self.sprite = pygame.transform.rotate(self.sprite, -90.)
-            elif self.diraction == 3:
+            elif self.direction == 3:
                 self.sprite = pygame.transform.rotate(self.sprite, 90.)
-            elif self.diraction == 4:
+            elif self.direction == 4:
                 self.sprite = pygame.transform.rotate(self.sprite, 180.)
 
-            self.diraction=2
+            self.direction=2
             self.needMove = True
         elif pressedKey[K_w]:
             moveDir.y = -1
-            if self.diraction == 4 :
+            if self.direction == 4 :
                 self.sprite = pygame.transform.rotate(self.sprite, -90.)
-            elif self.diraction == 2:
+            elif self.direction == 2:
                 self.sprite = pygame.transform.rotate(self.sprite, 90.)
-            elif self.diraction == 3:
+            elif self.direction == 3:
                 self.sprite = pygame.transform.rotate(self.sprite, 180.)
 
-            self.diraction=1
+            self.direction=1
             self.needMove = True
         elif pressedKey[K_s]:
             moveDir.y = 1
-            if self.diraction == 1 :
+            if self.direction == 1 :
                 self.sprite = pygame.transform.rotate(self.sprite, 180.)
-            elif self.diraction == 2:
+            elif self.direction == 2:
                 self.sprite = pygame.transform.rotate(self.sprite, -90.)
-            elif self.diraction == 4:
+            elif self.direction == 4:
                 self.sprite = pygame.transform.rotate(self.sprite, 90.)
 
-            self.diraction=3
+            self.direction=3
             self.needMove = True
         # else:
         #     self.x=0
@@ -141,12 +161,55 @@ class Player(GameObject):
         self.y += moveDir.y * self.speed * timePassedSecond
         borderLimit(self)
 
+        if gameTime % 20 == 0:
+            self.fire()
+
     def changWeapon(self):
         pass
 
     def display(self):
 
         surface.blit(self.sprite,(self.x,self.y))
+
+class Bullet(GameObject):
+    def __init__(self,x,y,width,height,direction):
+        super().__init__()
+        self.direction = direction
+        self.damage = random.randint(5,10)
+        self.setImage("../resources/img/bullet_2.png")
+        if(direction == 1):
+            self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            self.xSpeed = 0
+            self.ySpeed = -5
+            self.x = x + width/2 - self.width/2
+            self.y = y - self.height
+        elif(direction == 2):
+            # self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            self.xSpeed = 5
+            self.ySpeed = 0
+            self.x = x + width
+            self.y = y + height/2 - self.height/2
+        elif(direction == 3):
+            self.sprite = pygame.transform.rotate(self.sprite, -90.)
+            self.xSpeed = 0
+            self.ySpeed = 5
+            self.x = x + width/2 - self.width/2
+            self.y = y + height
+        else:
+            self.sprite = pygame.transform.rotate(self.sprite, 180.)
+            self.xSpeed = -5
+            self.ySpeed = 0
+            self.x = x - self.width
+            self.y = y + height/2 -self.height/2
+
+    def update(self):
+        self.x += self.xSpeed
+        self.y += self.ySpeed
+        if self.x > surface_WIDTH or self.x + self.width < 0 or \
+            self.y > surface_HEIGHT or self.y + surface_HEIGHT < 0:
+            self.isAlive = False
+    def display(self):
+        surface.blit(self.sprite,(self.x, self.y))
 
 #边界限制
 def borderLimit(eneity):
@@ -217,12 +280,24 @@ def init():
 #总更新方法
 def update():
     player.update()
+    bullets_update()
 
 def display():
     surface.blit(background, (0, 0))
     for mps in mapList:
         mps.display()
     player.display()
+    for bullet in player_bullets:
+        bullet.display()
+
+def bullets_update():
+    need_remove = []
+    for bullet in player_bullets:
+        if not bullet.isAlive:
+            need_remove.append(bullet)
+        bullet.update()
+    for bullet in need_remove:
+        player_bullets.remove(bullet)
 
 
 surface = None
@@ -233,10 +308,12 @@ tank2=None
 tank3=None
 timePassed=0        #记录游戏时间，ms
 timePassedSecond=0  #记录游戏时间，s
+gameTime = 0        #游戏总时间
 surface_WIDTH=600   #屏幕宽度
 surface_HEIGHT=400  #屏幕高度
 # bgColor = (55,45,85)
 
+player_bullets = [] #玩家子弹
 
 FPS=60          #最大帧数
 mapBlockLenth=40 #地图块大小
@@ -275,6 +352,7 @@ while True:
     eventListener() #事件监听
     timePassed = clock.tick(FPS)  # 获取时间ms
     timePassedSecond = timePassed / 1000.0  # 时间转换为s
+    gameTime += timePassed
     # for event in pygame.event.get():
     #     if event.type == QUIT:
     #         exit()
