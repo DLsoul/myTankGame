@@ -10,14 +10,14 @@ class GameObject(object):
     def __init__(self):
         self.x=None
         self.y=None
-        self.width=None
-        self.height=None
+        self.width=40
+        self.height=40
         self.isAlive=True
         self.sprite=None
 
     def setImage(self,imgPath):
         self.sprite=pygame.image.load(imgPath)
-        self.width,self.height=self.sprite.get_size()
+        # self.width,self.height=self.sprite.get_size()
 
     def update(self):
         pass
@@ -77,7 +77,8 @@ class Player(GameObject):
         #self.lifeFrame=        #血条
 
     def fire(self):
-        pass
+        bullet = Bullet(self.x,self.y,self.width,self.height,self.direction)
+        player_bullets.append(bullet)
 
     def hurt(self):
         pass
@@ -140,12 +141,51 @@ class Player(GameObject):
         self.x += moveDir.x * self.speed * timePassedSecond
         self.y += moveDir.y * self.speed * timePassedSecond
         borderLimit(self)
-
     def changWeapon(self):
         pass
 
     def display(self):
         surface.blit(self.sprite,(self.x,self.y))
+
+class Bullet(GameObject):
+    def __init__(self,x,y,width,height,direction):
+        super().__init__()
+        self.direction = direction
+        self.damage = random.randint(5,10)
+        self.setImage("../resources/img/bullet_2.png")
+        if(direction == 1):
+            self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            self.xSpeed = 0
+            self.ySpeed = -5
+            self.x = x + width/2 - self.width/2
+            self.y = y - self.height
+        elif(direction == 2):
+            # self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            self.xSpeed = 5
+            self.ySpeed = 0
+            self.x = x + width
+            self.y = y + height/2 - self.height/2
+        elif(direction == 3):
+            self.sprite = pygame.transform.rotate(self.sprite, -90.)
+            self.xSpeed = 0
+            self.ySpeed = 5
+            self.x = x + width/2 - self.width/2
+            self.y = y + height
+        elif(direction == 4):
+            self.sprite = pygame.transform.rotate(self.sprite, 180.)
+            self.xSpeed = -5
+            self.ySpeed = 0
+            self.x = x - self.width
+            self.y = y + height/2 -self.height/2
+
+    def update(self):
+        self.x += self.xSpeed
+        self.y += self.ySpeed
+        if self.x > surface_WIDTH or self.x + self.width < 0 or \
+            self.y > surface_HEIGHT or self.y + surface_HEIGHT < 0:
+            self.isAlive = False
+    def display(self):
+        surface.blit(self.sprite,(self.x, self.y))
 
 #========================敌人类=====================
 class Enemy():
@@ -186,7 +226,7 @@ class Enemy():
 
     def patrol(self):
         pathPoint=self.patrolPath.pop()
-        
+
 
     def setPatrolPath(self):
         pass
@@ -238,8 +278,9 @@ def eventListener():
     for event in pygame.event.get():
         if event.type == QUIT:
             exit()
-        # if event.type == KEYDOWN:
-        #     pass
+        if event.type == KEYDOWN:
+            if event.key == K_SPACE:
+                player.fire()
         # if event.type == MOUSEBUTTONDOWN:  # 按下鼠标触发
         #     left, wheel, right = pygame.mouse.get_pressed()
         #     if left == 1:
@@ -292,6 +333,7 @@ def init():
 #=========================总更新方法======================
 def update():
     player.update()
+    bullets_update()
 
 #========================显示 绘制 方法========================
 def display():
@@ -299,6 +341,17 @@ def display():
     for mps in mapList:
         mps.display()
     player.display()
+    for bullet in player_bullets:
+        bullet.display()
+
+def bullets_update():
+    need_remove = []
+    for bullet in player_bullets:
+        if not bullet.isAlive:
+            need_remove.append(bullet)
+        bullet.update()
+    for bullet in need_remove:
+        player_bullets.remove(bullet)
 
 
 surface = None
@@ -309,10 +362,12 @@ tank2=None
 tank3=None
 timePassed=0        #记录游戏时间，ms
 timePassedSecond=0  #记录游戏时间，s
+gameTime = 0        #游戏总时间
 surface_WIDTH=600   #屏幕宽度
 surface_HEIGHT=400  #屏幕高度
 # bgColor = (55,45,85)
 
+player_bullets = [] #玩家子弹
 
 FPS=60          #最大帧数
 mapBlockLenth=40 #地图块大小
@@ -351,6 +406,7 @@ while True:
     eventListener() #事件监听
     timePassed = clock.tick(FPS)  # 获取时间ms
     timePassedSecond = timePassed / 1000.0  # 时间转换为s
+    gameTime += timePassed
     # for event in pygame.event.get():
     #     if event.type == QUIT:
     #         exit()
