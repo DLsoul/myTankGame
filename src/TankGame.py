@@ -81,7 +81,7 @@ class Player(GameObject):
         self.lifeFrame = pygame.image.load("../resources/img/blood.png")    #血条
     def fire(self):
         bullet = Bullet(self.x,self.y,self.width,self.height,self.direction)
-        player_bullets.append(bullet)
+        playerBullets.append(bullet)
 
     def hurt(self):
         pass
@@ -347,22 +347,22 @@ def random_map():
     i=1
     generated_map=[]
     while i<=10:
-        map_row =[]
+        mapRow =[]
         j = 1
         while j<=15:
             if random.random()<=0.6:
-                map_row.append(0)
+                mapRow.append(0)
             else:
-                map_row.append(random.randint(1,6))
+                mapRow.append(random.randint(1,6))
             j+=1
-        generated_map.append(map_row)
+        generated_map.append(mapRow)
         i+=1
     return generated_map
 #=========================总更新方法======================
 def update():
     crash()
     player.update()
-    bullets_update()
+    bulletsUpdate()
 
 #========================显示 绘制 方法========================
 def display():
@@ -370,24 +370,24 @@ def display():
     for mps in mapList:
         mps.display()
     player.display()
-    for bullet in player_bullets:
+    for bullet in playerBullets:
         bullet.display()
 
-def bullets_update():
-    need_remove = []
-    for bullet in player_bullets:
+def bulletsUpdate():
+    needRemove = []
+    for bullet in playerBullets:
         if not bullet.isAlive:
-            need_remove.append(bullet)
+            needRemove.append(bullet)
         bullet.update()
-    for bullet in need_remove:
-        player_bullets.remove(bullet)
+    for bullet in needRemove:
+        playerBullets.remove(bullet)
 
 def crash():
-    player_crash_block()
+    playerCrashBlock()
 
 
 
-def player_crash_block():
+def playerCrashBlock():
     for blk in mapList:
         if blk.type:
             if player.isCrash(blk) == 1:
@@ -412,7 +412,7 @@ surface_WIDTH=600   #屏幕宽度
 surface_HEIGHT=400  #屏幕高度
 # bgColor = (55,45,85)
 
-player_bullets = [] #玩家子弹
+playerBullets = [] #玩家子弹
 
 FPS=60          #最大帧数
 mapBlockLenth=40 #地图块大小
