@@ -69,7 +69,7 @@ class Player(GameObject):
         super().setImage("../resources/img/tank_1.png")
         self.x=x
         self.y=y
-        self.diraction=Vector2(0,0)    #坦克朝向
+        self.direction=Vector2(0,0)    #坦克朝向
         self.needMove=False
         self.speed=30
         self.life=100
@@ -88,24 +88,24 @@ class Player(GameObject):
         pressedKey = pygame.key.get_pressed()
         if pressedKey:
             if pressedKey[K_a]:
-                self.diraction.x = -1
+                self.direction.x = -1
                 self.needMove=True
             if pressedKey[K_d]:
-                self.diraction.x = 1
+                self.direction.x = 1
                 self.needMove = True
             if pressedKey[K_w]:
-                self.diraction.y = -1
+                self.direction.y = -1
                 self.needMove = True
             if pressedKey[K_s]:
-                self.diraction.y = 1
+                self.direction.y = 1
                 self.needMove = True
         else:
             self.x=0
             self.y=0
             self.needMove=False
-        self.diraction.normalise()
-        self.x += self.diraction.x * self.speed * timePassedSecond
-        self.y += self.diraction.y * self.speed * timePassedSecond
+        self.direction.normalise()
+        self.x += self.direction.x * self.speed * timePassedSecond
+        self.y += self.direction.y * self.speed * timePassedSecond
         borderLimit(self)
 
     def changWeapon(self):

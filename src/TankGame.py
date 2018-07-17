@@ -1,11 +1,11 @@
 
-import pygame,os,sys
+import pygame,os,sys,math,random
 from pygame.locals import *
 from sys import exit
 from gameobjects.vector2 import Vector2
 
 pygame.init()
-#游戏实体
+#==================游戏实体======================
 class GameObject(object):
     def __init__(self):
         self.x=None
@@ -23,7 +23,7 @@ class GameObject(object):
         pass
 
     def display(self):
-        pass
+        surface.blit(self.sprite, (self.x, self.y))
 
     #用于检测在此方块上的碰撞
     def isCrash(self,other):
@@ -32,7 +32,7 @@ class GameObject(object):
     def __str__(self):
         return "坐标(%d,%d),名称%s"%(self.x,self.y,self)
 
-#地图类
+#========================地图类========================
 class Map(GameObject):
     def __init__(self,x,y,type):
         super().__init__()
@@ -62,15 +62,15 @@ class Map(GameObject):
     def __str__(self):
         return "坐标(%d,%d),地图%d"%(self.x,self.y,self.type)
 
-# 玩家类
+# =====================玩家类=============================
 class Player(GameObject):
     def __init__(self,x,y):
         super().__init__()
         super().setImage("../resources/img/tank_1.png")
         self.x=x
         self.y=y
-        #self.diraction=Vector2(0,-1)
-        self.diraction = 1      #坦克朝向 1上2右3下4左
+        #self.direction=Vector2(0,-1)
+        self.direction = 1      #坦克朝向 1上2右3下4左
         self.needMove=False
         self.speed=100
         self.life=100
@@ -86,57 +86,57 @@ class Player(GameObject):
         pass
 
     def update(self):
-        pressedKey = pygame.key.get_pressed()   #获取按键
+        #pressedKey = pygame.key.get_pressed()   #获取按键
         moveDir=Vector2(0,0)    #移动方向
         if pressedKey[K_a]:
             moveDir.x = -1
-            if self.diraction == 1 :
+            if self.direction == 1 :
                 self.sprite = pygame.transform.rotate(self.sprite, 90.)
-            elif self.diraction == 2:
+            elif self.direction == 2:
                 self.sprite = pygame.transform.rotate(self.sprite, 180.)
-            elif self.diraction == 3:
+            elif self.direction == 3:
                 self.sprite = pygame.transform.rotate(self.sprite, -90.)
 
-            self.diraction = 4
+            self.direction = 4
             self.needMove=True
         elif pressedKey[K_d]:
             moveDir.x = 1
-            if self.diraction == 1 :
+            if self.direction == 1 :
                 self.sprite = pygame.transform.rotate(self.sprite, -90.)
-            elif self.diraction == 3:
+            elif self.direction == 3:
                 self.sprite = pygame.transform.rotate(self.sprite, 90.)
-            elif self.diraction == 4:
+            elif self.direction == 4:
                 self.sprite = pygame.transform.rotate(self.sprite, 180.)
 
-            self.diraction=2
+            self.direction=2
             self.needMove = True
         elif pressedKey[K_w]:
             moveDir.y = -1
-            if self.diraction == 4 :
+            if self.direction == 4 :
                 self.sprite = pygame.transform.rotate(self.sprite, -90.)
-            elif self.diraction == 2:
+            elif self.direction == 2:
                 self.sprite = pygame.transform.rotate(self.sprite, 90.)
-            elif self.diraction == 3:
+            elif self.direction == 3:
                 self.sprite = pygame.transform.rotate(self.sprite, 180.)
 
-            self.diraction=1
+            self.direction=1
             self.needMove = True
         elif pressedKey[K_s]:
             moveDir.y = 1
-            if self.diraction == 1 :
+            if self.direction == 1 :
                 self.sprite = pygame.transform.rotate(self.sprite, 180.)
-            elif self.diraction == 2:
+            elif self.direction == 2:
                 self.sprite = pygame.transform.rotate(self.sprite, -90.)
-            elif self.diraction == 4:
+            elif self.direction == 4:
                 self.sprite = pygame.transform.rotate(self.sprite, 90.)
 
-            self.diraction=3
+            self.direction=3
             self.needMove = True
         # else:
         #     self.x=0
         #     self.y=0
         #     self.needMove=False
-        moveDir.normalise()
+        moveDir.normalise()     #向量规格化
         self.x += moveDir.x * self.speed * timePassedSecond
         self.y += moveDir.y * self.speed * timePassedSecond
         borderLimit(self)
@@ -145,10 +145,83 @@ class Player(GameObject):
         pass
 
     def display(self):
-
         surface.blit(self.sprite,(self.x,self.y))
 
-#边界限制
+#========================敌人类=====================
+class Enemy():
+    def __init__(self,x,y):
+        super().__init__()
+        super().setImage("../resources/img/tank_2.png")
+        self.x = x
+        self.y = y
+        # self.direction=Vector2(0,-1)
+        self.direction = 1  # 坦克朝向 1上2右3下4左
+        self.needMove = False
+        self.speed = 100
+        self.life = 100
+        self.patrolPath=[]
+
+    def hurt(self):
+        pass
+
+    def move(self):
+        pass
+
+    def update(self):
+        moveDir = Vector2(0, 0) #移动方向
+
+        if self.direction==1:
+            moveDir=Vector2(0,-1)
+        elif self.direction == 2:
+            moveDir=Vector2(1,0)
+        elif self.direction == 3:
+            moveDir=Vector2(0,1)
+        elif self.direction == 4:
+            moveDir=Vector2(-1,0)
+
+        moveDir.normalise()  # 向量规格化
+
+        # self.x += moveDir.x * self.speed * timePassedSecond
+        # self.y += moveDir.y * self.speed * timePassedSecond
+
+    def patrol(self):
+        pathPoint=self.patrolPath.pop()
+        
+
+    def setPatrolPath(self):
+        pass
+
+#============操控行为方法================
+def arrive(source,destination):
+    lenX=destination.x-source.x
+    lenY=destination.y-source.y
+    # dirTo=destination-source
+    if lenY==0:
+        if lenX > 10:
+            source.x+=source.speed * timePassedSecond
+        elif lenX <-10:
+            source.x -= source.speed * timePassedSecond
+        else :
+            source.x+=source.speed*timePassedSecond*lenX/10.
+    elif lenX==0:
+        if lenY > 10:
+            source.y+=source.speed * timePassedSecond
+        elif lenY<-10:
+            source.y -= source.speed * timePassedSecond
+        else :
+            source.y+=source.speed*timePassedSecond*lenY/10.
+
+def seek(source,destination):
+    lenX = destination.x - source.x
+    lenY = destination.y - source.y
+    # dirTo=destination-source
+    if lenY == 0:
+        source.x += source.speed * timePassedSecond
+    elif lenX == 0:
+        source.y += source.speed * timePassedSecond
+
+
+#==================边界限制方法====================
 def borderLimit(eneity):
     if eneity.x > surface_WIDTH - eneity.width:
         eneity.x = surface_WIDTH - eneity.width
@@ -159,13 +232,14 @@ def borderLimit(eneity):
     if eneity.y < 0:
         eneity.y = 0
 
-#事件监听方法
+#=======================事件监听方法=====================
 def eventListener():
+    global pressedKey   #按键信息
     for event in pygame.event.get():
         if event.type == QUIT:
             exit()
-        if event.type == KEYDOWN:
-            pass
+        # if event.type == KEYDOWN:
+        #     pass
         # if event.type == MOUSEBUTTONDOWN:  # 按下鼠标触发
         #     left, wheel, right = pygame.mouse.get_pressed()
         #     if left == 1:
@@ -181,8 +255,9 @@ def eventListener():
         #     surface_SIZE = event.size
         #     surface = pygame.display.set_mode(surface_SIZE, RESIZABLE, 32)
         #     pygame.display.set_caption("Window resized to" + str(event.size))
+    pressedKey = pygame.key.get_pressed()
 
-#获取地图表
+#======================获取地图表方法===========================
 def getList(Tlist,Tarray):
     blockLen=len(Tarray) #地图表长度
     i,j=0,0
@@ -195,7 +270,7 @@ def getList(Tlist,Tarray):
         j=0
         i+=1
 
-#初始化
+#=========================初始化方法==========================
 def init():
     global surface,clock,player,background,tank1,tank2,tank3
     surface = pygame.display.set_mode((surface_WIDTH, surface_HEIGHT), 0, 32)
@@ -214,10 +289,11 @@ def init():
         i += 1
 
 
-#总更新方法
+#=========================总更新方法======================
 def update():
     player.update()
 
+#========================显示 绘制 方法========================
 def display():
     surface.blit(background, (0, 0))
     for mps in mapList:
@@ -247,19 +323,19 @@ tankNum=2       #坦克总数
 
 player=None     #玩家
 
-#障碍物位置信息
+#障碍物位置信息  15*10
 mapArrayIndex=[
-    [0,1,0,0,0,4,0,2,0,0,0,3,2,0,0,0,2,0,0,0],
-    [0,0,0,0,2,0,4,0,0,0,0,0,0,1,2,0,0,0,3,0],
-    [0,0,0,1,5,0,0,0,3,0,0,0,3,1,0,0,2,6,0,1],
+    [0,1,0,0,0,4,0,2,0,0,0,3,2,0,0,0],
+    [0,0,0,0,2,0,4,0,0,0,0,0,0,1,2,0],
+    [0,0,0,1,5,0,0,0,3,0,0,0,3,1,0,0],
     [2,0,0,1,0,6,1,0,0,0,0,0,0,5,0,1],
-    [0,0,3,1,0,0,0,3,0,1],
-    [0,2,6,0,0,5,0,0,0,0,0,2,0,0,0,1,2],
-    [0,3,0,1,0,1,0,6,0,0],
-    [0,0,0,1,0,1,0,3,1,0],
-    [0,0,3,0,0,0,0,0,0,0],
-    [0,0,2,1,6,0,0,5,0,4],
-    [0,0,0,1,2,0,0,0,3,0,0,0,3,1,0,0,0,1,0,1],
+    [0,0,3,1,0,0,0,3,0,1,2,0,0,0,2,1],
+    [0,2,6,0,0,5,0,0,0,0,0,2,0,0,0,1],
+    [0,3,0,1,0,1,0,6,0,0,0,0,3,0,3,6],
+    [0,0,0,1,0,1,0,3,1,0,0,1,0,1,5,2],
+    [0,0,3,0,0,0,0,0,0,0,2,6,0,1,4,6],
+    [0,0,2,1,6,0,0,5,0,4,0,6,1,0,2,1],
+    #[0,0,0,1,2,0,0,0,3,0,0,0,3,1,0,0],
     ]
 mapList=[]      #地图表，存储障碍物精灵图片
 init()          #初始化
