@@ -1,4 +1,3 @@
-
 import pygame,os,sys,math,random
 from pygame.locals import *
 from sys import exit
@@ -339,7 +338,22 @@ def init():
         wallSprite.append(sprite)
         i += 1
 
-
+#=========================随机地图======================
+def random_map():
+    i=1
+    generated_map=[]
+    while i<=10:
+        map_row =[]
+        j = 1
+        while j<=15:
+            if random.random()<=0.6:
+                map_row.append(0)
+            else:
+                map_row.append(random.randint(1,6))
+            j+=1
+        generated_map.append(map_row)
+        i+=1
+    return generated_map
 #=========================总更新方法======================
 def update():
     crash()
@@ -419,6 +433,7 @@ mapArrayIndex=[
     [0,0,2,1,6,0,0,5,0,4,0,6,1,0,2,1],
     #[0,0,0,1,2,0,0,0,3,0,0,0,3,1,0,0],
     ]
+mapArrayIndex=random_map()
 mapList=[]      #地图表，存储障碍物精灵图片
 init()          #初始化
 getList(mapList,mapArrayIndex)  #根据障碍物位置信息填写地图表
