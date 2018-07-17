@@ -232,6 +232,7 @@ class Enemy():
         pass
 
 #============操控行为方法================
+#到达
 def arrive(source,destination):
     lenX=destination.x-source.x
     lenY=destination.y-source.y
@@ -250,7 +251,7 @@ def arrive(source,destination):
             source.y -= source.speed * timePassedSecond
         else :
             source.y+=source.speed*timePassedSecond*lenY/10.
-
+#靠近
 def seek(source,destination):
     lenX = destination.x - source.x
     lenY = destination.y - source.y
