@@ -78,8 +78,7 @@ class Player(GameObject):
         self.needMove=False
         self.speed=100
         self.life=100
-        #self.lifeFrame=        #血条
-
+        self.lifeFrame = pygame.image.load("../resources/img/blood.png")    #血条
     def fire(self):
         bullet = Bullet(self.x,self.y,self.width,self.height,self.direction)
         player_bullets.append(bullet)
@@ -154,6 +153,11 @@ class Player(GameObject):
         pass
 
     def display(self):
+        surface.blit(self.lifeFrame, (self.x, self.y - 5))
+        if self.life > 0:
+            pygame.draw.rect(surface, (255, 0, 0),
+                             (self.x - self.width + 39.8, self.y - self.height + 35,
+                              57 * self.life / 140, 5))
         surface.blit(self.sprite,(self.x,self.y))
 
 class Bullet(GameObject):
