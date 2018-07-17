@@ -103,8 +103,14 @@ class Player(GameObject):
     def move(self):
         pass
 
+    # def spaceListener(self):
+    #     for event in pygame.event.get():
+    #         if event.type == KEYDOWN:
+    #             if event.key == K_SPACE:
+    #                 self.fire()
+
     def update(self):
-        # print("timePassed",timePassed)
+        # self.spaceListener()
         pressedKey = pygame.key.get_pressed()   #获取按键
         moveDir=Vector2(0,0)    #移动方向
         if pressedKey[K_a]:
@@ -161,9 +167,8 @@ class Player(GameObject):
         self.y += moveDir.y * self.speed * timePassedSecond
         borderLimit(self)
 
-        if gameTime % 20 == 0:
-            self.fire()
-
+        # if gameTime % 20 == 0:
+        #    self.fire()
     def changWeapon(self):
         pass
 
@@ -228,7 +233,8 @@ def eventListener():
         if event.type == QUIT:
             exit()
         if event.type == KEYDOWN:
-            pass
+            if event.key == K_SPACE:
+                player.fire()
         # if event.type == MOUSEBUTTONDOWN:  # 按下鼠标触发
         #     left, wheel, right = pygame.mouse.get_pressed()
         #     if left == 1:
