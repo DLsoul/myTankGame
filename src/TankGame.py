@@ -77,24 +77,7 @@ class Player(GameObject):
         #self.lifeFrame=        #血条
 
     def fire(self):
-        # xSpeed = 0
-        # ySpeed = 0
-        # if(self.direction == 1):
-        #     xSpeed = 0
-        #     ySpeed = -5
-        # elif(self.direction == 2):
-        #     xSpeed = 5
-        #     ySpeed = 0
-        # elif(self.direction == 3):
-        #     xSpeed = 0
-        #     ySpeed = 5
-        # elif(self.direction == 4):
-        #     xSpeed = -5
-        #     ySpeed = 0
         bullet = Bullet(self.x,self.y,self.width,self.height,self.direction)
-        # bullet.setImage("../resources/img/bullet_2.png")
-        # bullet.sprite = pygame.transform.rotate(bullet.sprite, 90.)
-        # bullet.damage = random.randint(5,10)
         player_bullets.append(bullet)
 
     def hurt(self):
@@ -103,19 +86,11 @@ class Player(GameObject):
     def move(self):
         pass
 
-    # def spaceListener(self):
-    #     for event in pygame.event.get():
-    #         if event.type == KEYDOWN:
-    #             if event.key == K_SPACE:
-    #                 self.fire()
-
     def update(self):
-        # self.spaceListener()
         pressedKey = pygame.key.get_pressed()   #获取按键
         moveDir=Vector2(0,0)    #移动方向
         if pressedKey[K_a]:
             moveDir.x = -1
-            player_bullets.clear()
             if self.direction == 1 :
                 self.sprite = pygame.transform.rotate(self.sprite, 90.)
             elif self.direction == 2:
@@ -166,9 +141,6 @@ class Player(GameObject):
         self.x += moveDir.x * self.speed * timePassedSecond
         self.y += moveDir.y * self.speed * timePassedSecond
         borderLimit(self)
-
-        # if gameTime % 20 == 0:
-        #    self.fire()
     def changWeapon(self):
         pass
 
@@ -200,7 +172,7 @@ class Bullet(GameObject):
             self.ySpeed = 5
             self.x = x + width/2 - self.width/2
             self.y = y + height
-        else:
+        elif(direction == 4):
             self.sprite = pygame.transform.rotate(self.sprite, 180.)
             self.xSpeed = -5
             self.ySpeed = 0
