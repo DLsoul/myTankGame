@@ -27,7 +27,12 @@ class GameObject(object):
 
     #用于检测在此方块上的碰撞
     def isCrash(self,other):
-        pass
+        if self.x < other.x + other.width-10 \
+                and self.x + self.width > other.x +10 \
+                and self.y < other.y + other.height-10  \
+                and self.y + self.height > other.y+10 :
+            return True
+        return False
 
     def __str__(self):
         return "坐标(%d,%d),名称%s"%(self.x,self.y,self)
@@ -85,6 +90,11 @@ class Player(GameObject):
 
     def move(self):
         pass
+
+    def isCrash(self,other):
+        if super().isCrash(other):
+            return self.direction
+        return 0
 
     def update(self):
         #pressedKey = pygame.key.get_pressed()   #获取按键
@@ -332,6 +342,7 @@ def init():
 
 #=========================总更新方法======================
 def update():
+    crash()
     player.update()
     bullets_update()
 
@@ -353,6 +364,22 @@ def bullets_update():
     for bullet in need_remove:
         player_bullets.remove(bullet)
 
+def crash():
+    player_crash_block()
+
+
+
+def player_crash_block():
+    for blk in mapList:
+        if blk.type:
+            if player.isCrash(blk) == 1:
+                player.y = blk.y + 40
+            elif player.isCrash(blk) == 2:
+                player.x = blk.x - 40
+            elif player.isCrash(blk) == 3:
+                player.y = blk.y - 40
+            elif player.isCrash(blk) == 4:
+                player.x = blk.x + 40
 
 surface = None
 clock = None
