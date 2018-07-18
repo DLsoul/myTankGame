@@ -208,7 +208,7 @@ class Player(GameObject):
     def display(self):
         if self.life > 0:
             surface.blit(self.lifeFrame, (self.x, self.y - 5))
-            pygame.draw.rect(surface, (255, 0, 0),
+            pygame.draw.rect(surface, (253, 240, 1),
                              (self.x - self.width + 39.8, self.y - self.height + 35,
                               1140 * self.life / 140, 5))
             surface.blit(self.sprite,(self.x,self.y))
@@ -225,24 +225,24 @@ class Bullet(GameObject):
             self.xSpeed = 0
             self.ySpeed = -5
             self.x = x + width/2 - self.width/2
-            self.y = y - self.height
+            self.y = y - self.height + 25
         elif(direction == 2):
             # self.sprite = pygame.transform.rotate(self.sprite, 90.)
             self.xSpeed = 5
             self.ySpeed = 0
-            self.x = x + width
+            self.x = x + width - 25
             self.y = y + height/2 - self.height/2
         elif(direction == 3):
             self.sprite = pygame.transform.rotate(self.sprite, -90.)
             self.xSpeed = 0
             self.ySpeed = 5
             self.x = x + width/2 - self.width/2
-            self.y = y + height
+            self.y = y + height - 25
         elif(direction == 4):
             self.sprite = pygame.transform.rotate(self.sprite, 180.)
             self.xSpeed = -5
             self.ySpeed = 0
-            self.x = x - self.width
+            self.x = x - self.width + 25
             self.y = y + height/2 -self.height/2
 
     def isCrash(self,other):
@@ -753,6 +753,10 @@ def superBulletsUpdate():
             if blk.x<=bullet.x+40 and blk.x>=bullet.x-40 \
                 and blk.y<=bullet.y+40 and blk.y>=bullet.y-40:
                 blk.isAlive=False
+        for enemy in enemies:
+            if enemy.x<=bullet.x+40 and enemy.x>=bullet.x-40 \
+                and enemy.y<=bullet.y+40 and enemy.y>=bullet.y-40:
+                enemy.isAlive=False
         playerSuperBullets.remove(bullet)
 
 def crash():
