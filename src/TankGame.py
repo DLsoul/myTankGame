@@ -2,6 +2,7 @@ import pygame,os,sys,math,random
 from pygame.locals import *
 from sys import exit
 from gameobjects.vector2 import Vector2
+import time
 
 pygame.init()
 #==================游戏实体======================
@@ -26,11 +27,20 @@ class GameObject(object):
         surface.blit(self.sprite, (self.x, self.y))
 
     #用于检测在此方块上的碰撞
-    def isCrash(self,other):
+    def isCrash(self,other,re_flag):
         if self.x < other.x + other.width-10 \
                 and self.x + self.width > other.x +10 \
                 and self.y < other.y + other.height-10  \
                 and self.y + self.height > other.y+10 :
+            if re_flag:
+                if self.direction==1:
+                    self.y = other.y + other.height-10
+                elif self.direction==2:
+                    self.x = other.x + 10- self.width
+                elif self.direction==3:
+                    self.y  = other.y + 10-self.height
+                elif self.direction==4:
+                    self.x = other.x + other.width - 10
             return True
         return False
 
@@ -58,10 +68,21 @@ class Map(GameObject):
         self.boom_img.append(pygame.image.load("../resources/img/bomb_18.png"))
         self.boom_img.append(pygame.image.load("../resources/img/bomb_19.png"))
         self.boom_img.append(pygame.image.load("../resources/img/bomb_20.png"))
+        if self.type == 7 or self.type==12:
+            self.life=4
+        elif self.type==2:
+            self.life=1
+        else:
+            self.life=10000
 
     #用于检测在此方块上的碰撞
     def isCrash(self,other):
         pass
+
+    def hurt(self,other):
+        self.life-=other.damage
+        if self.life<=0:
+            self.isAlive=False
 
     def setImage(self,sprite):
         self.sprite=sprite
@@ -74,7 +95,10 @@ class Map(GameObject):
         surface.blit(self.sprite,(self.x,self.y))
 
     def update(self):
-        if self.isAlive == False:
+        if self.isAlive:
+            if self.type==7 or self.type==12:
+                self.sprite = pygame.image.load("../resources/img/wall_7_%d.png" % (5-self.life)).convert_alpha()
+        elif self.isAlive == False:
             if self.boom_index >= len(self.boom_img):
                 mapList.remove(self)
                 self.isAlive = False
@@ -111,7 +135,7 @@ class Player(GameObject):
         pass
 
     def isCrash(self,other):
-        if super().isCrash(other):
+        if super().isCrash(other,True) and other.isAlive:
             return self.direction
         return 0
 
@@ -185,7 +209,8 @@ class Bullet(GameObject):
     def __init__(self,x,y,width,height,direction):
         super().__init__()
         self.direction = direction
-        self.damage = random.randint(5,10)
+        # self.damage = random.randint(5,10)
+        self.damage = 1
         self.setImage("../resources/img/bullet_2.png")
         if(direction == 1):
             self.sprite = pygame.transform.rotate(self.sprite, 90.)
@@ -329,6 +354,30 @@ class TankEnemy2(Enemy):
 
     def fire(self):
         pass
+
+
+#=============开始菜单=============
+class StartPage(object):
+    def __init__(self):
+        self.beforeStart = []
+        for i in range(1,11):
+            self.beforeStart.append(pygame.image.load("../resources/img/beforeStart_"+str(i)+".jpg"))
+        # self.beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
+        self.afterStart = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
+
+    def isFocus(self):
+        point_x, point_y = pygame.mouse.get_pos()
+        if (220 < point_x < 380) and (293 < point_y < 333):
+            return True
+        else:
+            return False
+    def display(self):
+        if self.isFocus():
+            surface.blit(self.afterStart, (0, 0))
+        else:
+            if gameCount % 9 == 0:
+                num = gameCount % 10
+                surface.blit(self.beforeStart[num], (0, 0))
 
     def update(self):
         if self.life<=0:
@@ -512,13 +561,22 @@ def borderLimit(eneity):
 
 #=======================事件监听方法=====================
 def eventListener():
-    global pressedKey   #按键信息
+    global pressedKey,gameMode,startPage   #按键信息
     for event in pygame.event.get():
         if event.type == QUIT:
             exit()
+        if event.type == MOUSEBUTTONDOWN:
+            left, wheel, right = pygame.mouse.get_pressed()
+            if left == 1 and gameMode == True:
+                player.fire()
+            if left == 1 and gameMode == False and startPage.isFocus():
+                gameMode = True
         if event.type == KEYDOWN:
             if event.key == K_SPACE:
                 player.fire()
+            # if event.key == K_k:
+            #     surface.blit(afterStart, (0, 0))
+            #     gameMode = True
         # if event.type == MOUSEBUTTONDOWN:  # 按下鼠标触发
         #     left, wheel, right = pygame.mouse.get_pressed()
         #     if left == 1:
@@ -551,15 +609,20 @@ def getList(Tlist,Tarray):
 
 #=========================初始化方法==========================
 def init():
-    global surface,clock,player,background,tank1,tank2,tank3,enemyTank
+    global enemyTank,surface,clock,player,background,tank1,tank2,tank3,startPage
+
     surface = pygame.display.set_mode((surface_WIDTH, surface_HEIGHT), 0, 32)
     background = pygame.image.load("../resources/img/background.png").convert()
     tank1 = pygame.image.load("../resources/img/tank_1.png").convert_alpha()
     tank2 = pygame.image.load("../resources/img/tank_2.png").convert_alpha()
     tank3 = pygame.image.load("../resources/img/tank_3.png").convert_alpha()
+    # beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
+    # afterStart = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
     clock = pygame.time.Clock()
     player = Player(320, 240)
     #enemyTank.append(Enemy(400,280))
+    startPage = StartPage()
+
     i = 1
     # 获取墙图片
     while i <= wallNum:
@@ -575,8 +638,10 @@ def randomMap():
         mapRow =[]
         j = 1
         while j<=15:
-            if random.random()<=0.75:
+            if random.random()<=0.6:
                 mapRow.append(0)
+            elif random.random()<=0.3:
+                mapRow.append(7)
             else:
                 mapRow.append(random.randint(1,12))
             j+=1
@@ -586,8 +651,8 @@ def randomMap():
 
 #=========================总更新方法======================
 def update():
-    crash()
     player.update()
+    crash()
     bulletsUpdate()
     blocksUpdate()
     for enemy in enemyTank:
@@ -618,29 +683,24 @@ def crash():
     playerBulletCrashBlock()
 
 
-
 def playerCrashBlock():
     for blk in mapList:
         if blk.type:
-            if player.isCrash(blk) == 1:
-                player.y = blk.y + 40
-            elif player.isCrash(blk) == 2:
-                player.x = blk.x - 40
-            elif player.isCrash(blk) == 3:
-                player.y = blk.y - 40
-            elif player.isCrash(blk) == 4:
-                player.x = blk.x + 40
+            player.isCrash(blk)
 
 def playerBulletCrashBlock():
     for p_b in playerBullets:
         for blk in mapList:
             if blk.type:
-                if p_b.isCrash(blk):
-                    blk.isAlive = False
+                if p_b.isCrash(blk) and p_b.isAlive and blk.isAlive:
+                    blk.hurt(p_b)
                     p_b.isAlive = False
+# 开始游戏界面
+# def showGame():
+#     if(gameMode == False):
+#         surface.blit(beforeStart, (0, 0))
 
 def blocksUpdate():
-
     for blk in mapList:
         if blk.type:
             #print(blk.isAlive)
@@ -650,13 +710,15 @@ def blocksUpdate():
             blk.update()
     # for blk in need_remove:
     #     mapList.remove(blk)
-
+gameMode = False #标志位，判断是游戏开始界面还是游戏界面
 surface = None
 clock = None
 background=None
 tank1=None
 tank2=None
 tank3=None
+beforeStart = None
+afterStart = None
 timePassed=0        #记录游戏时间，ms
 timePassedSecond=0  #记录游戏时间，s
 gameTime = 0        #游戏总时间
@@ -675,6 +737,7 @@ wallNum=12      #障碍物总种类
 tankNum=2       #坦克总数
 
 player=None     #玩家
+startPage = None
 
 #障碍物位置信息  15*10
 # mapArrayIndex=[
@@ -695,12 +758,14 @@ mapList=[]      #地图表，存储障碍物精灵图片
 init()          #初始化
 getList(mapList,mapArrayIndex)  #根据障碍物位置信息填写地图表
 #绘制背景地图
-surface.blit(background,(0,0))
 #绘制障碍物
 # for mps in mapList:
 #     mps.display(surface)
 #     print(mps)
 gameCount = 0
+# showGame()
+
+
 while True:
     gameCount += 1
     if gameCount == 1000000:
@@ -725,7 +790,12 @@ while True:
     # for mps in mapList:
     #     mps.drawWall(surface)
     #     print(mp)
-    update()
-    display()
+
+
+    if(gameMode == False):
+        startPage.display()
+    else:
+        update()
+        display()
 
     pygame.display.update()
