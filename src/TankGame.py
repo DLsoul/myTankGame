@@ -124,12 +124,14 @@ class Player(GameObject):
         self.speed=100
         self.life=100
         self.lifeFrame = pygame.image.load("../resources/img/blood.png")    #血条
+
     def fire(self):
         bullet = Bullet(self.x,self.y,self.width,self.height,self.direction)
         playerBullets.append(bullet)
 
     def hurt(self):
-        pass
+        if gameCount % 10 == 0:
+            self.life -= 5
 
     def move(self):
         pass
@@ -142,6 +144,10 @@ class Player(GameObject):
     def update(self):
         #pressedKey = pygame.key.get_pressed()   #获取按键
         moveDir=Vector2(0,0)    #移动方向
+        self.hurt() #此处完成后需删除
+        global isGameOver
+        if self.life <= 0:
+            isGameOver = True
         if pressedKey[K_a]:
             moveDir.x = -1
             if self.direction == 1 :
@@ -194,6 +200,7 @@ class Player(GameObject):
         self.x += moveDir.x * self.speed * timePassedSecond
         self.y += moveDir.y * self.speed * timePassedSecond
         borderLimit(self)
+
     def changWeapon(self):
         pass
 
@@ -697,15 +704,16 @@ def getList(Tlist,Tarray):
 
 #=========================初始化方法==========================
 def init():
-    global enemyTank,enemyWorld,surface,clock,player,background,tank1,tank2,tank3,startPage
-
+    global enemyTank,enemyWorld,surface,clock,player,background,tank1,tank2,tank3,overImg,startPage
     surface = pygame.display.set_mode((surface_WIDTH, surface_HEIGHT), 0, 32)
+    pygame.display.set_caption("坦克大战")
     background = pygame.image.load("../resources/img/background.png").convert()
     tank1 = pygame.image.load("../resources/img/tank_1.png").convert_alpha()
     tank2 = pygame.image.load("../resources/img/tank_2.png").convert_alpha()
     tank3 = pygame.image.load("../resources/img/tank_3.png").convert_alpha()
     # beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
     # afterStart = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
+    overImg = pygame.image.load("../resources/img/fail.png").convert_alpha()
     clock = pygame.time.Clock()
     player = Player(320, 240)
     enemyWorld=EnemyWorld()
@@ -740,7 +748,8 @@ def randomMap():
 
 #=========================总更新方法======================
 def update():
-    player.update()
+    if not isGameOver:
+        player.update()
     crash()
     bulletsUpdate()
     blocksUpdate()
@@ -752,9 +761,10 @@ def display():
     surface.blit(background, (0, 0))
     for mps in mapList:
         mps.display()
-    player.display()
-    for bullet in playerBullets:
-        bullet.display()
+    if not isGameOver:
+        player.display()
+        for bullet in playerBullets:
+            bullet.display()
     for enemy in enemyTank:
         enemy.display()
 
@@ -768,8 +778,9 @@ def bulletsUpdate():
         playerBullets.remove(bullet)
 
 def crash():
-    playerCrashBlock()
-    playerBulletCrashBlock()
+    if not isGameOver:
+        playerCrashBlock()
+        playerBulletCrashBlock()
 
 
 def playerCrashBlock():
@@ -788,6 +799,14 @@ def playerBulletCrashBlock():
 # def showGame():
 #     if(gameMode == False):
 #         surface.blit(beforeStart, (0, 0))
+# 真正的初始化
+def startGame():
+    global gameCount,mapList
+    mapArrayIndex = randomMap()
+    mapList = []  # 地图表，存储障碍物精灵图片
+    init()  # 初始化
+    getList(mapList, mapArrayIndex)  # 根据障碍物位置信息填写地图表
+    gameCount = 0
 
 def blocksUpdate():
     for blk in mapList:
@@ -825,10 +844,12 @@ wallSprite=[]   #障碍物精灵组
 tankSprite=[]   #坦克精灵组
 wallNum=12      #障碍物总种类
 tankNum=2       #坦克总数
-
+gameCount = 0
 player=None     #玩家
 startPage = None
-
+isGameOver = False #玩家是否存活
+mapList = None #地图表
+gameOverCount = 0 #
 #障碍物位置信息  15*10
 # mapArrayIndex=[
 #     [0,1,0,0,0,4,0,2,0,0,0,3,2,0,0,0],
@@ -843,18 +864,19 @@ startPage = None
 #     [0,0,2,1,6,0,0,5,0,4,0,6,1,0,2,1],
 #     #[0,0,0,1,2,0,0,0,3,0,0,0,3,1,0,0],
 #     ]
-mapArrayIndex=randomMap()
-mapList=[]      #地图表，存储障碍物精灵图片
-init()          #初始化
-getList(mapList,mapArrayIndex)  #根据障碍物位置信息填写地图表
+# mapArrayIndex=randomMap()
+# mapList=[]      #地图表，存储障碍物精灵图片
+# init()          #初始化
+# getList(mapList,mapArrayIndex)  #根据障碍物位置信息填写地图表
 #绘制背景地图
 #绘制障碍物
 # for mps in mapList:
 #     mps.display(surface)
 #     print(mps)
-gameCount = 0
+# gameCount = 0
 # showGame()
 
+startGame()
 
 while True:
     gameCount += 1
@@ -887,5 +909,14 @@ while True:
     else:
         update()
         display()
-
+    if isGameOver:
+        # for i in range(1,180):
+        # surface.blit(overImg, (215, 125))
+        surface.blit(overImg, (0, 0))
+        gameOverCount += 1
+        if gameOverCount > 70:
+            gameMode = False
+            isGameOver = False
+            gameOverCount = 0
+            startGame()
     pygame.display.update()
