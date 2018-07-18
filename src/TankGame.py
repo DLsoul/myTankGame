@@ -143,7 +143,7 @@ class Player(GameObject):
     def update(self):
         #pressedKey = pygame.key.get_pressed()   #获取按键
         moveDir=Vector2(0,0)    #移动方向
-        self.hurt() #此处完成后需删除
+        #self.hurt() #此处完成后需删除
         global isGameOver
         if self.life <= 0:
             isGameOver = True
@@ -457,6 +457,10 @@ def gamePause():
                 exit()
             if event.type == KEYDOWN:
                 if event.key == K_p:
+                    pause=False
+            if event.type == MOUSEBUTTONDOWN:  # 按下鼠标触发
+                left, wheel, right = pygame.mouse.get_pressed()
+                if left == 1:
                     pause=False
         clock.tick(FPS)
         pygame.display.update()
