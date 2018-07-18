@@ -2,7 +2,6 @@ import pygame,os,sys,math,random
 from pygame.locals import *
 from sys import exit
 from gameobjects.vector2 import Vector2
-import time
 
 pygame.init()
 #==================游戏实体======================
