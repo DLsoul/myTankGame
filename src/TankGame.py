@@ -127,6 +127,10 @@ class Player(GameObject):
         bullet = Bullet(self.x,self.y,self.width,self.height,self.direction)
         playerBullets.append(bullet)
 
+    def fire1(self):
+        superBullet = SuperBullet(self.x, self.y, self.width, self.height, self.direction)
+        playerSuperBullets.append(superBullet)
+
     def hurt(self,bullet):
         global isGameOver
         self.life -= bullet.damage
@@ -381,6 +385,133 @@ class Enemy(GameObject):
             return self.direction
         return 0
 
+class SuperBullet(Bullet):
+    def __init__(self,x,y,width,height,direction):
+        super().__init__(x,y,width,height,direction)
+        self.damage = 1
+        self.setImage("../resources/img/superBullet.png")
+        if (direction == 1):
+            # self.setImage("../resources/img/super_bullet_1.png")
+            # self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            self.xSpeed = -100
+            self.ySpeed = -160
+            self.g=200
+            self.x = x + width / 2 - self.width / 2
+            self.y = y - self.height + 25
+        elif (direction == 2):
+            # self.setImage("../resources/img/super_bullet_2.png")
+            self.sprite = pygame.transform.rotate(self.sprite, -90.)
+            self.xSpeed = 160
+            self.ySpeed = -100
+            self.g = 200
+            self.x = x + width - 25
+            self.y = y + height / 2 - self.height / 2
+        elif (direction == 3):
+            # self.setImage("../resources/img/super_bullet_3.png")
+            self.sprite = pygame.transform.rotate(self.sprite, 180.)
+            self.xSpeed = 100
+            self.ySpeed = 160
+            self.g=-200
+            self.x = x + width / 2 - self.width / 2
+            self.y = y + height - 25
+        elif (direction == 4):
+            # self.setImage("../resources/img/super_bullet_4.png")
+            self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            self.xSpeed = -160
+            self.ySpeed = -100
+            self.g=200
+            self.x = x - self.width + 25
+            self.y = y + height / 2 - self.height / 2
+
+    def update(self):
+        if (self.direction == 1) and self.isAlive:
+            self.xSpeed+=self.g*timePassedSecond
+            self.x+=self.xSpeed*timePassedSecond
+            self.y+=self.ySpeed*timePassedSecond
+            if self.x > surface_WIDTH or self.x + self.width < 0 or \
+                self.y > surface_HEIGHT or self.y + surface_HEIGHT < 0 or \
+                    self.xSpeed>=100:
+                self.isAlive = False
+        if (self.direction == 2) and self.isAlive:
+            self.ySpeed += self.g * timePassedSecond
+            self.x += self.xSpeed * timePassedSecond
+            self.y += self.ySpeed * timePassedSecond
+            if self.x > surface_WIDTH or self.x + self.width < 0 or \
+                    self.y > surface_HEIGHT or self.y + surface_HEIGHT < 0 or \
+                    self.ySpeed >= 100:
+                self.isAlive = False
+        if (self.direction == 3) and self.isAlive:
+            self.xSpeed+=self.g*timePassedSecond
+            self.x+=self.xSpeed*timePassedSecond
+            self.y+=self.ySpeed*timePassedSecond
+            if self.x > surface_WIDTH or self.x + self.width < 0 or \
+                self.y > surface_HEIGHT or self.y + surface_HEIGHT < 0 or \
+                    self.xSpeed<=-100:
+                self.isAlive = False
+        if (self.direction == 4) and self.isAlive:
+            self.ySpeed += self.g * timePassedSecond
+            self.x += self.xSpeed * timePassedSecond
+            self.y += self.ySpeed * timePassedSecond
+            if self.x > surface_WIDTH or self.x + self.width < 0 or \
+                    self.y > surface_HEIGHT or self.y + surface_HEIGHT < 0 or \
+                    self.ySpeed >= 100:
+                self.isAlive = False
+    def display(self):
+        surface.blit(self.sprite,(self.x, self.y))
+# =====================白云类=============================
+class Cloud(GameObject):
+    def __init__(self):
+        super().__init__()
+        if random.randint(0, 1) == 0:
+            self.x_speed =random.randint(8,10)
+        else:
+            self.x_speed = -random.randint(5,8)
+        self.y_speed =random.randint(8,10)
+        self.x = random.randint(0, surface_WIDTH)
+        self.y = -10
+
+    def move(self):
+        if gameCount % 200 == 0:
+            if random.randint(0, 3) == 0:
+                self.x_speed = -random.randint(5,8)
+            else:
+                self.x_speed = random.randint(8,10)
+            if random.randint(0, 6) == 0:
+                self.y_speed =-random.randint(5,8)
+            else:
+                self.y_speed =random.randint(8,10)
+        self.x += self.x_speed*timePassedSecond
+        self.y += self.y_speed*timePassedSecond
+        if self.y > surface_HEIGHT:
+            self.isAlive = False
+        if self.x - self.width < 0 or self.x>surface_WIDTH:
+            self.isAlive = False
+
+    def move1(self,other):
+        if other.x_speed > 0:
+            self.x_speed = other.x_speed - 2
+        else:
+            self.x_speed = other.x_speed + 2
+        if other.y_speed > 0:
+            self.y_speed = other.y_speed - 2
+        else:
+            self.y_speed = other.y_speed + 2
+        self.x += self.x_speed * timePassedSecond
+        self.y += self.y_speed * timePassedSecond
+        if not other.isAlive:
+            self.isAlive = False
+
+
+    def update(self):
+        if self.isAlive:
+            self.move()
+    def update1(self,other):
+        if self.isAlive:
+            self.move1(other)
+
+    def display(self):
+        super().display()
+
 #=============开始菜单=============
 class StartPage(object):
     def __init__(self):
@@ -460,6 +591,8 @@ def eventListener():
         if event.type == KEYDOWN:
             if event.key == K_SPACE:
                 player.fire()
+            if event.key == K_l:
+                player.fire1()
             if event.key == K_p:
                 pause=True
                 gamePause()
@@ -563,12 +696,14 @@ def randomMap():
     return generatedMap
 #=========================总更新方法======================
 def update():
+    cloud_update()
     if not isGameOver:
         player.update()
     for enemy in enemies:
         enemy.update()
     crash()
     bulletsUpdate()
+    superBulletsUpdate()
     blocksUpdate()
 
 #========================显示 绘制 方法========================
@@ -580,10 +715,16 @@ def display():
         player.display()
         for bullet in playerBullets:
             bullet.display()
+    for bullet in playerSuperBullets:
+        bullet.display()
     for bullet in enemyBullets:
         bullet.display()
     for enemy in enemies:
         enemy.display()
+    for cld1 in clouds1:
+        cld1.display()
+    for cld in clouds:
+         cld.display()
 
 def bulletsUpdate():
     needRemove = []
@@ -600,6 +741,19 @@ def bulletsUpdate():
         playerBullets.remove(bullet)
     for bullet in removeNeed:
         enemyBullets.remove(bullet)
+
+def superBulletsUpdate():
+    needRemove = []
+    for bullet in playerSuperBullets:
+        if not bullet.isAlive:
+            needRemove.append(bullet)
+        bullet.update()
+    for bullet in needRemove:
+        for blk in mapList:
+            if blk.x<=bullet.x+40 and blk.x>=bullet.x-40 \
+                and blk.y<=bullet.y+40 and blk.y>=bullet.y-40:
+                blk.isAlive=False
+        playerSuperBullets.remove(bullet)
 
 def crash():
     if not isGameOver:
@@ -683,10 +837,54 @@ def blocksUpdate():
             blk.update()
     # for blk in need_remove:
     #     mapList.remove(blk)
+
+def cloud_update():
+    global cloud_time
+    need_remove = []
+    need_remove1 = []
+    for cld in clouds:
+        if not cld.isAlive:
+            need_remove.append(cld)
+        cld.update()
+    for cld1 in clouds1:
+        if not cld1.isAlive:
+            need_remove1.append(cld1)
+        if clouds1.index(cld1)<len(clouds1)-1:
+            cld1.update1(clouds[clouds1.index(cld1)])
+        else:
+            cld1.update1(clouds[clouds1.index(cld1)-1])
+    for cld in need_remove:
+        clouds.remove(cld)
+    for cld1 in need_remove1:
+        clouds1.remove(cld1)
+    if gameCount % cloud_time == 0:
+        cloud_time = random.randint(1, 4) * 50
+        if len(clouds)<=3:
+            c = Cloud()
+            c1= Cloud()
+            c1.x=c.x+30
+            c1.y=c.y+30
+            # if c.x_speed>0:
+            #     c1.x_speed=c.x_speed-1
+            # else:
+            #     c1.x_speed = c.x_speed + 1
+            # if c.y_speed>0:
+            #     c1.y_speed=c.y_speed-1
+            # else:
+            #     c1.y_speed = c.y_speed + 1
+            i=random.randint(1, 3)
+            c.sprite=pygame.image.load("../resources/img/cloud_%d.png" % (i)).convert_alpha()
+            c1.sprite=pygame.image.load("../resources/img/cloud_%d.png" % (i+3)).convert_alpha()
+            clouds1.append(c1)
+            clouds.append(c)
+
 gameMode = False #标志位，判断是游戏开始界面还是游戏界面
 surface = None
 clock = None
 background=None
+clouds=[]
+clouds1=[]
+cloud_time = random.randint(1, 6) * 35
 tank1=None
 tank2=None
 tank3=None
@@ -701,6 +899,7 @@ surface_HEIGHT=400  #屏幕高度
 enemies = [] #敌人数组
 playerBullets = [] #玩家子弹
 enemyBullets = [] #敌人子弹
+playerSuperBullets=[]
 randomDir = None
 FPS=60          #最大帧数
 mapBlockLenth=40 #地图块大小
