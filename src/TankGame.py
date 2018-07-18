@@ -421,7 +421,7 @@ def init():
     tank1 = pygame.image.load("../resources/img/tank_1.png").convert_alpha()
     tank2 = pygame.image.load("../resources/img/tank_2.png").convert_alpha()
     tank3 = pygame.image.load("../resources/img/tank_3.png").convert_alpha()
-    pauseBackground = pygame.image.load("../resources/img/pause1.png").convert_alpha()
+    pauseBackground = pygame.image.load("../resources/img/pause.png").convert_alpha()
     # beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
     # afterStart = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
     clock = pygame.time.Clock()
