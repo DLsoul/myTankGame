@@ -198,7 +198,7 @@ class Bullet(GameObject):
         surface.blit(self.sprite,(self.x, self.y))
 
 #========================敌人类=====================
-class Enemy():
+class Enemy(GameObject):
     def __init__(self,x,y):
         super().__init__()
         super().setImage("../resources/img/tank_2.png")
@@ -210,11 +210,20 @@ class Enemy():
         self.speed = 100
         self.life = 100
         self.patrolPath=[]
+        self.setPatrolPath([(self.x+120,self.y),(self.x+80,self.y-120),(self.x+120,self.y-120),(self.x,self.y-120),(self.x,self.y)])
+        self.target=Vector2(self.x+80,self.y)  #目标点
+        self.arriveDist=0.5         #判定到达距离
+        self.speedDownDist=10       #开始减速距离
+        self.needToPatrol=True     #是否进行巡逻
+        self.pointCount=0           #巡逻点计数
 
     def hurt(self):
         pass
 
     def move(self):
+        pass
+
+    def thinkover(self):
         pass
 
     def update(self):
@@ -231,36 +240,64 @@ class Enemy():
 
         moveDir.normalise()  # 向量规格化
 
+        if self.needToPatrol:
+            self.patrol()
         # self.x += moveDir.x * self.speed * timePassedSecond
         # self.y += moveDir.y * self.speed * timePassedSecond
 
     def patrol(self):
-        pathPoint=self.patrolPath.pop()
+        self.target = self.patrolPath[self.pointCount]
+        if self.pointCount < len(self.patrolPath)-1:
+            if distanceTo(self,self.target)<self.arriveDist:
+                self.x,self.y=self.target.x,self.target.y
+                self.pointCount+=1
+                # self.target = self.patrolPath[self.pointCount]
+            else:
+                arrive(self,self.target,self.speedDownDist)
+        else:
+            if distanceTo(self,self.target)<self.arriveDist:
+                self.x,self.y=self.target.x,self.target.y
+                self.needToPatrol=False
+            else:
+                arrive(self,self.target,self.speedDownDist)
+
+    def setTarget(self,tar):
+        self.target=tar
+
+    def setPatrolPath(self,points):
+        # p1=Vector2(points[0][0],points[0][1])
+        # p2 = Vector2(points[1][0], points[1][1])
+        self.patrolPath=[]
+        for pot in points:
+            p=Vector2(pot[0],pot[1])
+            self.patrolPath.append(p)
 
 
-    def setPatrolPath(self):
-        pass
+def distanceTo(source,target):
+    lenX = target.x - source.x
+    lenY = target.y - source.y
+    return math.sqrt(lenX*lenX+lenY*lenY)
 
 #============操控行为方法================
 #到达
-def arrive(source,destination):
+def arrive(source,destination,speedDownDist):
     lenX=destination.x-source.x
     lenY=destination.y-source.y
     # dirTo=destination-source
     if lenY==0:
-        if lenX > 10:
+        if lenX > speedDownDist:
             source.x+=source.speed * timePassedSecond
-        elif lenX <-10:
+        elif lenX <-speedDownDist:
             source.x -= source.speed * timePassedSecond
         else :
-            source.x+=source.speed*timePassedSecond*lenX/10.
+            source.x+=source.speed*timePassedSecond*lenX/speedDownDist
     elif lenX==0:
-        if lenY > 10:
+        if lenY > speedDownDist:
             source.y+=source.speed * timePassedSecond
-        elif lenY<-10:
+        elif lenY<-speedDownDist:
             source.y -= source.speed * timePassedSecond
         else :
-            source.y+=source.speed*timePassedSecond*lenY/10.
+            source.y+=source.speed*timePassedSecond*lenY/speedDownDist
 #靠近
 def seek(source,destination):
     lenX = destination.x - source.x
@@ -324,7 +361,7 @@ def getList(Tlist,Tarray):
 
 #=========================初始化方法==========================
 def init():
-    global surface,clock,player,background,tank1,tank2,tank3
+    global surface,clock,player,background,tank1,tank2,tank3,enemyTank
     surface = pygame.display.set_mode((surface_WIDTH, surface_HEIGHT), 0, 32)
     background = pygame.image.load("../resources/img/background.png").convert()
     tank1 = pygame.image.load("../resources/img/tank_1.png").convert_alpha()
@@ -332,7 +369,7 @@ def init():
     tank3 = pygame.image.load("../resources/img/tank_3.png").convert_alpha()
     clock = pygame.time.Clock()
     player = Player(320, 240)
-
+    enemyTank.append(Enemy(400,280))
     i = 1
     # 获取墙图片
     while i <= wallNum:
@@ -346,6 +383,8 @@ def update():
     crash()
     player.update()
     bullets_update()
+    for enemy in enemyTank:
+        enemy.update()
 
 #========================显示 绘制 方法========================
 def display():
@@ -355,6 +394,8 @@ def display():
     player.display()
     for bullet in player_bullets:
         bullet.display()
+    for enemy in enemyTank:
+        enemy.display()
 
 def bullets_update():
     need_remove = []
@@ -367,7 +408,6 @@ def bullets_update():
 
 def crash():
     player_crash_block()
-
 
 
 def player_crash_block():
@@ -396,6 +436,7 @@ surface_HEIGHT=400  #屏幕高度
 # bgColor = (55,45,85)
 
 player_bullets = [] #玩家子弹
+enemyTank=[]
 
 FPS=60          #最大帧数
 mapBlockLenth=40 #地图块大小
