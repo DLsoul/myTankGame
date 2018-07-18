@@ -46,7 +46,7 @@ class GameObject(object):
         return "坐标(%d,%d),名称%s"%(self.x,self.y,self)
 
 #========================地图类========================
-class Map(GameObject):
+class Block(GameObject):
     def __init__(self,x,y,type):
         super().__init__()
         self.x=x
@@ -232,25 +232,20 @@ class Battery(GameObject):
         super().__init__()
         self.direction = 1
         self.isAlive=True
-        self.life=20
+        self.life=5
         self.sprite=pygame.image.load("../resources/img/炮台.png")   #装载炮台图片
         self.x=x
         self.y=y
         self.lifeFrame = pygame.image.load("../resources/img/blood.png")  # 血条
         self.boom_index = 0
         self.boom_img = []
-        self.boom_img.append(pygame.image.load("../resources/img/bomb_11.png"))
-        self.boom_img.append(pygame.image.load("../resources/img/bomb_12.png"))
-        self.boom_img.append(pygame.image.load("../resources/img/bomb_13.png"))
-        self.boom_img.append(pygame.image.load("../resources/img/bomb_14.png"))
-        self.boom_img.append(pygame.image.load("../resources/img/bomb_15.png"))
-        self.boom_img.append(pygame.image.load("../resources/img/bomb_16.png"))
-        self.boom_img.append(pygame.image.load("../resources/img/bomb_17.png"))
-        self.boom_img.append(pygame.image.load("../resources/img/bomb_18.png"))
-        self.boom_img.append(pygame.image.load("../resources/img/bomb_19.png"))
-        self.boom_img.append(pygame.image.load("../resources/img/bomb_20.png"))
+        i=1
+        while i<=64:
+            self.boom_img.append(pygame.image.load("../resources/img/bossBomb__%d.png"%i))
+            i+=1
         surface.blit(self.lifeFrame, (self.x, self.y - 5))
     def update(self):
+        global winTheGame,gameMode
         if self.isAlive:
             pass
         else:
@@ -258,11 +253,12 @@ class Battery(GameObject):
 
                 self.isAlive = False
                 bat.remove(self)
-                # 遊戲勝利
+                winTheGame=True# 遊戲勝利
+                gameMode = False
                 self.boom_index = len(self.boom_img) - 1
             self.sprite = self.boom_img[self.boom_index]
             # print(game_count)
-            if gameCount % 6 == 0:
+            if gameCount % 1 == 0:
                 self.boom_index += 1
         #self.bat = pygame.image.load("../resources/img/tank_1.png")
     def display(self):
@@ -270,7 +266,9 @@ class Battery(GameObject):
             pygame.draw.rect(surface, (255, 0, 0),
                              (self.x - self.width + 39.8, self.y - self.height + 35,
                               285 * self.life / 140, 5))
-        surface.blit(self.sprite, (self.x, self.y))
+            surface.blit(self.sprite, (self.x, self.y))
+        else:
+            surface.blit(self.sprite, (420, 120))
     def fire(self):
         batteryDir=Vector2(player.x-self.x,player.y-self.y)
 
@@ -718,6 +716,28 @@ class StartPage(object):
                 num = gameCount % 10
                 surface.blit(self.beforeStart[num], (0, 0))
 
+#=============胜利界面=============
+class WinPage(object):
+    def __init__(self):
+        # self.beforeStart = []
+        # for i in range(1,11):
+        #     self.beforeStart.append(pygame.image.load("../resources/img/beforeStart_"+str(i)+".jpg"))
+        # self.beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
+        self.beforeContinue = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
+        self.afterContinue = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
+
+    def isFocus(self):
+        point_x, point_y = pygame.mouse.get_pos()
+        if (220 < point_x < 380) and (293 < point_y < 333):
+            return True
+        else:
+            return False
+    def display(self):
+        if self.isFocus():
+            surface.blit(self.afterContinue, (0, 0))
+        else:
+            surface.blit(self.beforeContinue, (0, 0))
+
 #============操控行为方法================
 # def arrive(source,destination):
 #     lenX=destination.x-source.x
@@ -761,7 +781,7 @@ def borderLimit(eneity):
 
 #=======================事件监听方法=====================
 def eventListener():
-    global pressedKey,gameMode,startPage,pause   #按键信息
+    global pressedKey,gameMode,startPage,pause,winPage   #按键信息
     for event in pygame.event.get():
         if event.type == QUIT:
             exit()
@@ -771,10 +791,13 @@ def eventListener():
                 player.fire()
             if left == 1 and gameMode == False and startPage.isFocus():
                 gameMode = True
+            if left == 1 and gameMode == False and winPage.isFocus():
+                gameMode = True
+
         if event.type == KEYDOWN:
-            if event.key == K_SPACE:
+            if event.key == K_j:
                 player.fire()
-            if event.key == K_l:
+            if event.key == K_k:
                 player.fire1()
             if event.key == K_p:
                 pause=True
@@ -806,14 +829,14 @@ def getList(Tlist,Tarray):
     #获取地图表
     while i<blockLen:
         while j<len(Tarray[i]):
-            mp=Map(j*mapBlockLenth,i*mapBlockLenth,Tarray[i][j])
+            mp=Block(j*mapBlockLenth,i*mapBlockLenth,Tarray[i][j])
             Tlist.append(mp)
             j+=1
         j=0
         i+=1
 #=========================初始化方法==========================
 def init():
-    global surface,clock,player,background,tank1,tank2,tank3,startPage,pauseBackground,overImg,enemies,myfont   #,textSurface,fenshu
+    global surface,clock,player,background,tank1,tank2,tank3,startPage,winPage,pauseBackground,overImg,enemies,myfont ,winImg  #,textSurface,fenshu
     surface = pygame.display.set_mode((surface_WIDTH, surface_HEIGHT), 0, 32)
     myfont=pygame.font.SysFont("BrushScriptStd.ttf",36)#字体设置
     # textSurface=myfont.render("分数：%d"%fenshu,True,(255,255,255))
@@ -829,12 +852,13 @@ def init():
     # beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
     # afterStart = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
     overImg = pygame.image.load("../resources/img/fail.png").convert_alpha()
+    winImg = pygame.image.load("../resources/img/胜利.png").convert_alpha()
     clock = pygame.time.Clock()
     player = Player(80, 240)
-    bat.append(Battery(560, 180))
+    bat.append(Battery(480, 180))
     # enemy = Enemy(400,300)
     startPage = StartPage()
-
+    winPage = WinPage()
     i = 1
     # 获取墙图片
     while i <= wallNum:
@@ -1191,7 +1215,9 @@ tankNum=2       #坦克总数
 gameCount = 0
 player=None     #玩家
 startPage = None
+winPage=None
 isGameOver = False #玩家是否存活
+winTheGame=False
 mapList = None #地图表
 gameOverCount = 0 #
 mapArrayIndex = None
@@ -1257,10 +1283,17 @@ while True:
     #     print(mp)
 
     if(gameMode == False):
-        startPage.display()
+        if winTheGame:
+            winPage.display()
+        else:
+            startPage.display()
     else:
         update()
         display()
+    # if winTheGame:
+    #     surface.blit(winImg, (0, 0))
+    # if winTheGame:
+    #     if winPage.isf
     if isGameOver:
         # for i in range(1,180):
         # surface.blit(overImg, (215, 125))
