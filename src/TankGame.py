@@ -1253,10 +1253,11 @@ startGame()
 pause=False
 
 while True:
-    while (len(enemies) < 3):
-        enemy = Enemy(random.randint(10,14)*40,random.randint(4,6)*40)
-        mapArrayIndex[enemy.y//40][enemy.x//40] = 0
-        enemies.append(enemy)
+    if gameCount%120==0:
+        while (len(enemies) < 3):
+            enemy = Enemy(random.randint(10,14)*40,random.randint(4,6)*40)
+            mapArrayIndex[enemy.y//40][enemy.x//40] = 0
+            enemies.append(enemy)
 
     gameCount += 1
     if gameCount == 1000000:
