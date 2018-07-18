@@ -120,16 +120,19 @@ class Player(GameObject):
         self.direction = 1      #坦克朝向 1上2右3下4左
         self.needMove=False
         self.speed=100
-        self.life=100
+        self.life=5
         self.lifeFrame = pygame.image.load("../resources/img/blood.png")    #血条
 
     def fire(self):
         bullet = Bullet(self.x,self.y,self.width,self.height,self.direction)
         playerBullets.append(bullet)
 
-    def hurt(self):
-        if gameCount % 10 == 0:
-            self.life -= 5
+    def hurt(self,bullet):
+        global isGameOver
+        self.life -= bullet.damage
+        if self.life <= 0:
+            self.isAlive = False
+            isGameOver = True
 
     def move(self):
         pass
@@ -140,221 +143,71 @@ class Player(GameObject):
         return 0
 
     def update(self):
-        #pressedKey = pygame.key.get_pressed()   #获取按键
-        moveDir=Vector2(0,0)    #移动方向
-        #self.hurt() #此处完成后需删除
-        global isGameOver
-        if self.life <= 0:
-            isGameOver = True
-        if pressedKey[K_a]:
-            moveDir.x = -1
-            if self.direction == 1 :
-                self.sprite = pygame.transform.rotate(self.sprite, 90.)
-            elif self.direction == 2:
-                self.sprite = pygame.transform.rotate(self.sprite, 180.)
-            elif self.direction == 3:
-                self.sprite = pygame.transform.rotate(self.sprite, -90.)
+        if self.isAlive:
+            moveDir=Vector2(0,0)    #移动方向
+            if pressedKey[K_a]:
+                moveDir.x = -1
+                if self.direction == 1 :
+                    self.sprite = pygame.transform.rotate(self.sprite, 90.)
+                elif self.direction == 2:
+                    self.sprite = pygame.transform.rotate(self.sprite, 180.)
+                elif self.direction == 3:
+                    self.sprite = pygame.transform.rotate(self.sprite, -90.)
 
-            self.direction = 4
-            self.needMove=True
-        elif pressedKey[K_d]:
-            moveDir.x = 1
-            if self.direction == 1 :
-                self.sprite = pygame.transform.rotate(self.sprite, -90.)
-            elif self.direction == 3:
-                self.sprite = pygame.transform.rotate(self.sprite, 90.)
-            elif self.direction == 4:
-                self.sprite = pygame.transform.rotate(self.sprite, 180.)
+                self.direction = 4
+                self.needMove=True
+            elif pressedKey[K_d]:
+                moveDir.x = 1
+                if self.direction == 1 :
+                    self.sprite = pygame.transform.rotate(self.sprite, -90.)
+                elif self.direction == 3:
+                    self.sprite = pygame.transform.rotate(self.sprite, 90.)
+                elif self.direction == 4:
+                    self.sprite = pygame.transform.rotate(self.sprite, 180.)
 
-            self.direction=2
-            self.needMove = True
-        elif pressedKey[K_w]:
-            moveDir.y = -1
-            if self.direction == 4 :
-                self.sprite = pygame.transform.rotate(self.sprite, -90.)
-            elif self.direction == 2:
-                self.sprite = pygame.transform.rotate(self.sprite, 90.)
-            elif self.direction == 3:
-                self.sprite = pygame.transform.rotate(self.sprite, 180.)
+                self.direction=2
+                self.needMove = True
+            elif pressedKey[K_w]:
+                moveDir.y = -1
+                if self.direction == 4 :
+                    self.sprite = pygame.transform.rotate(self.sprite, -90.)
+                elif self.direction == 2:
+                    self.sprite = pygame.transform.rotate(self.sprite, 90.)
+                elif self.direction == 3:
+                    self.sprite = pygame.transform.rotate(self.sprite, 180.)
 
-            self.direction=1
-            self.needMove = True
-        elif pressedKey[K_s]:
-            moveDir.y = 1
-            if self.direction == 1 :
-                self.sprite = pygame.transform.rotate(self.sprite, 180.)
-            elif self.direction == 2:
-                self.sprite = pygame.transform.rotate(self.sprite, -90.)
-            elif self.direction == 4:
-                self.sprite = pygame.transform.rotate(self.sprite, 90.)
+                self.direction=1
+                self.needMove = True
+            elif pressedKey[K_s]:
+                moveDir.y = 1
+                if self.direction == 1 :
+                    self.sprite = pygame.transform.rotate(self.sprite, 180.)
+                elif self.direction == 2:
+                    self.sprite = pygame.transform.rotate(self.sprite, -90.)
+                elif self.direction == 4:
+                    self.sprite = pygame.transform.rotate(self.sprite, 90.)
 
-            self.direction=3
-            self.needMove = True
-        # else:
-        #     self.x=0
-        #     self.y=0
-        #     self.needMove=False
-        moveDir.normalise()     #向量规格化
-        self.x += moveDir.x * self.speed * timePassedSecond
-        self.y += moveDir.y * self.speed * timePassedSecond
-        borderLimit(self)
+                self.direction=3
+                self.needMove = True
+            # else:
+            #     self.x=0
+            #     self.y=0
+            #     self.needMove=False
+            moveDir.normalise()     #向量规格化
+            self.x += moveDir.x * self.speed * timePassedSecond
+            self.y += moveDir.y * self.speed * timePassedSecond
+            borderLimit(self)
 
     def changWeapon(self):
         pass
 
     def display(self):
-        surface.blit(self.lifeFrame, (self.x, self.y - 5))
         if self.life > 0:
+            surface.blit(self.lifeFrame, (self.x, self.y - 5))
             pygame.draw.rect(surface, (255, 0, 0),
                              (self.x - self.width + 39.8, self.y - self.height + 35,
-                              57 * self.life / 140, 5))
-        surface.blit(self.sprite,(self.x,self.y))
-
-
-#========================敌人类=====================
-class Enemy(GameObject):
-    # def __init__(self,x,y):
-    #     super().__init__()
-    #     super().setImage("../resources/img/tank_2.png")
-    #     self.x = x
-    #     self.y = y
-    #     # self.direction=Vector2(0,-1)
-    #     self.direction = 1  # 坦克朝向 1上2右3下4左
-    #     self.needMove = False
-    #     self.speed = 100
-    #     self.life = 100
-    #     self.patrolPath=[]
-    #
-    # def hurt(self):
-    #     pass
-    #
-    # def move(self):
-    #     pass
-    #
-    # def update(self):
-    #     moveDir = Vector2(0, 0) #移动方向
-    #
-    #     if self.direction==1:
-    #         moveDir=Vector2(0,-1)
-    #     elif self.direction == 2:
-    #         moveDir=Vector2(1,0)
-    #     elif self.direction == 3:
-    #         moveDir=Vector2(0,1)
-    #     elif self.direction == 4:
-    #         moveDir=Vector2(-1,0)
-    #
-    #     moveDir.normalise()  # 向量规格化
-    #
-    #     # self.x += moveDir.x * self.speed * timePassedSecond
-    #     # self.y += moveDir.y * self.speed * timePassedSecond
-    #
-    # def patrol(self):
-    #     pathPoint=self.patrolPath.pop()
-    #
-    #
-    # def setPatrolPath(self):
-    #     pass
-    def __init__(self,x,y):
-        super().__init__()
-        super().setImage("../resources/img/tank_2.png")
-        self.x=x
-        self.y=y
-        #self.direction=Vector2(0,-1)
-        self.direction = 1      #坦克朝向 1上2右3下4左
-        self.needMove=False
-        self.speed=50
-        self.life=100
-        self.lifeFrame = pygame.image.load("../resources/img/blood.png")    #血条
-
-    def fire(self):
-        bullet = Bullet(self.x,self.y,self.width,self.height,self.direction)
-        enemyBullets.append(bullet)
-
-    def hurt(self):
-        if gameCount % 10 == 0:
-            self.life -= 5
-
-    def move(self):
-        pass
-
-    def isCrash(self,other):
-        if super().isCrash(other,True) and other.isAlive:
-            return self.direction
-        return 0
-
-    def update(self):
-        global direction
-        #pressedKey = pygame.key.get_pressed()   #获取按键
-        moveDir=Vector2(0,0)    #移动方向
-        #self.hurt() #此处完成后需删除
-        if gameCount%60==0:
-            direction = random.randint(1,4)
-        global isGameOver
-        if self.life <= 0:
-            isGameOver = True
-        if  direction == 1:
-            moveDir.x = -1
-            if self.direction == 1 :
-                self.sprite = pygame.transform.rotate(self.sprite, 90.)
-            elif self.direction == 2:
-                self.sprite = pygame.transform.rotate(self.sprite, 180.)
-            elif self.direction == 3:
-                self.sprite = pygame.transform.rotate(self.sprite, -90.)
-
-            self.direction = 4
-            self.needMove=True
-        elif direction == 2:
-            moveDir.x = 1
-            if self.direction == 1 :
-                self.sprite = pygame.transform.rotate(self.sprite, -90.)
-            elif self.direction == 3:
-                self.sprite = pygame.transform.rotate(self.sprite, 90.)
-            elif self.direction == 4:
-                self.sprite = pygame.transform.rotate(self.sprite, 180.)
-
-            self.direction=2
-            self.needMove = True
-        elif direction == 3:
-            moveDir.y = -1
-            if self.direction == 4 :
-                self.sprite = pygame.transform.rotate(self.sprite, -90.)
-            elif self.direction == 2:
-                self.sprite = pygame.transform.rotate(self.sprite, 90.)
-            elif self.direction == 3:
-                self.sprite = pygame.transform.rotate(self.sprite, 180.)
-
-            self.direction=1
-            self.needMove = True
-        elif direction == 4:
-            moveDir.y = 1
-            if self.direction == 1 :
-                self.sprite = pygame.transform.rotate(self.sprite, 180.)
-            elif self.direction == 2:
-                self.sprite = pygame.transform.rotate(self.sprite, -90.)
-            elif self.direction == 4:
-                self.sprite = pygame.transform.rotate(self.sprite, 90.)
-
-            self.direction=3
-            self.needMove = True
-        # else:
-        #     self.x=0
-        #     self.y=0
-        #     self.needMove=False
-        moveDir.normalise()     #向量规格化
-        self.x += moveDir.x * self.speed * timePassedSecond
-        self.y += moveDir.y * self.speed * timePassedSecond
-        borderLimit(self)
-
-    def changWeapon(self):
-        pass
-
-    def display(self):
-        surface.blit(self.lifeFrame, (self.x, self.y - 5))
-        if self.life > 0:
-            pygame.draw.rect(surface, (255, 0, 0),
-                             (self.x - self.width + 39.8, self.y - self.height + 35,
-                              57 * self.life / 140, 5))
-        surface.blit(self.sprite,(self.x,self.y))
+                              1140 * self.life / 140, 5))
+            surface.blit(self.sprite,(self.x,self.y))
 
 class Bullet(GameObject):
     def __init__(self,x,y,width,height,direction):
@@ -405,6 +258,129 @@ class Bullet(GameObject):
     def display(self):
         surface.blit(self.sprite,(self.x, self.y))
 
+#========================敌人类=====================
+class Enemy(GameObject):
+    def __init__(self,x,y):
+        super().__init__()
+        super().setImage("../resources/img/tank_2.png")
+        self.x = x
+        self.y = y
+        # self.direction=Vector2(0,-1)
+        self.direction = 1  # 坦克朝向 1上2右3下4左
+        self.needMove = False
+        self.speed = 50
+        self.life = 5
+        self.patrolPath=[]
+        self.lifeFrame = pygame.image.load("../resources/img/blood.png")
+        self.randomDir = 1
+        self.moveAble = True
+        self.boom_index = 0
+        self.boom_img = []
+        for i in range(11,21):
+            self.boom_img.append(pygame.image.load("../resources/img/bomb_"+str(i)+".png"))
+
+    def hurt(self,bullet):
+        self.life -= bullet.damage
+        if self.life <= 0:
+            self.isAlive = False
+
+    def fire(self):
+        bullet = Bullet(self.x,self.y,self.width,self.height,self.direction)
+        enemyBullets.append(bullet)
+
+    def move(self):
+        pass
+
+    def update(self):
+        global enemies
+        if self.isAlive:
+            moveDir = Vector2(0, 0) #移动方向
+            # randomDir = random.randint(1, 4)
+            # randomDir = 1
+            if gameCount % 30 == 0:
+                self.fire()
+            if gameCount % 30 == 0:
+                self.randomDir = random.randint(1,4)
+            if self.randomDir == 4:
+                moveDir.x = -1
+                if self.direction == 1:
+                    self.sprite = pygame.transform.rotate(self.sprite, 90.)
+                elif self.direction == 2:
+                    self.sprite = pygame.transform.rotate(self.sprite, 180.)
+                elif self.direction == 3:
+                    self.sprite = pygame.transform.rotate(self.sprite, -90.)
+
+                self.direction = 4
+                self.needMove=True
+            elif self.randomDir == 2:
+                moveDir.x = 1
+                if self.direction == 1 :
+                    self.sprite = pygame.transform.rotate(self.sprite, -90.)
+                elif self.direction == 3:
+                    self.sprite = pygame.transform.rotate(self.sprite, 90.)
+                elif self.direction == 4:
+                    self.sprite = pygame.transform.rotate(self.sprite, 180.)
+
+                self.direction=2
+                self.needMove = True
+            elif self.randomDir == 1:
+                moveDir.y = -1
+                if self.direction == 4 :
+                    self.sprite = pygame.transform.rotate(self.sprite, -90.)
+                elif self.direction == 2:
+                    self.sprite = pygame.transform.rotate(self.sprite, 90.)
+                elif self.direction == 3:
+                    self.sprite = pygame.transform.rotate(self.sprite, 180.)
+
+                self.direction=1
+                self.needMove = True
+            elif self.randomDir == 3:
+                moveDir.y = 1
+                if self.direction == 1 :
+                    self.sprite = pygame.transform.rotate(self.sprite, 180.)
+                elif self.direction == 2:
+                    self.sprite = pygame.transform.rotate(self.sprite, -90.)
+                elif self.direction == 4:
+                    self.sprite = pygame.transform.rotate(self.sprite, 90.)
+
+                self.direction=3
+                self.needMove = True
+            # else:
+            #     self.x=0
+            #     self.y=0
+            #     self.needMove=False
+            moveDir.normalise()     #向量规格化
+            if self.moveAble:
+                self.x += moveDir.x * self.speed * timePassedSecond
+                self.y += moveDir.y * self.speed * timePassedSecond
+            else:
+                self.moveAble = True
+
+            borderLimit(self)
+        else:
+            if self.boom_index >= len(self.boom_img):
+                enemies.remove(self)
+                self.isAlive = False
+                self.boom_index = len(self.boom_img) - 1
+            self.sprite = self.boom_img[self.boom_index]
+            # print(game_count)
+            if gameCount % 3 == 0:
+                self.boom_index += 1
+
+    def display(self):
+        if self.life > 0:
+            surface.blit(self.lifeFrame, (self.x, self.y - 5))
+            pygame.draw.rect(surface, (255, 0, 0),
+                             (self.x - self.width + 39.8, self.y - self.height + 35,
+                              1140 * self.life / 140, 5))
+        surface.blit(self.sprite,(self.x,self.y))
+
+    def isCrash(self,other):
+        if super().isCrash(other,True) and other.isAlive:
+            self.moveAble = False
+            return self.direction
+        return 0
+
 #=============开始菜单=============
 class StartPage(object):
     def __init__(self):
@@ -429,33 +405,33 @@ class StartPage(object):
                 surface.blit(self.beforeStart[num], (0, 0))
 
 #============操控行为方法================
-def arrive(source,destination):
-    lenX=destination.x-source.x
-    lenY=destination.y-source.y
-    # dirTo=destination-source
-    if lenY==0:
-        if lenX > 10:
-            source.x+=source.speed * timePassedSecond
-        elif lenX <-10:
-            source.x -= source.speed * timePassedSecond
-        else :
-            source.x+=source.speed*timePassedSecond*lenX/10.
-    elif lenX==0:
-        if lenY > 10:
-            source.y+=source.speed * timePassedSecond
-        elif lenY<-10:
-            source.y -= source.speed * timePassedSecond
-        else :
-            source.y+=source.speed*timePassedSecond*lenY/10.
+# def arrive(source,destination):
+#     lenX=destination.x-source.x
+#     lenY=destination.y-source.y
+#     # dirTo=destination-source
+#     if lenY==0:
+#         if lenX > 10:
+#             source.x+=source.speed * timePassedSecond
+#         elif lenX <-10:
+#             source.x -= source.speed * timePassedSecond
+#         else :
+#             source.x+=source.speed*timePassedSecond*lenX/10.
+#     elif lenX==0:
+#         if lenY > 10:
+#             source.y+=source.speed * timePassedSecond
+#         elif lenY<-10:
+#             source.y -= source.speed * timePassedSecond
+#         else :
+#             source.y+=source.speed*timePassedSecond*lenY/10.
 
-def seek(source,destination):
-    lenX = destination.x - source.x
-    lenY = destination.y - source.y
-    # dirTo=destination-source
-    if lenY == 0:
-        source.x += source.speed * timePassedSecond
-    elif lenX == 0:
-        source.y += source.speed * timePassedSecond
+# def seek(source,destination):
+#     lenX = destination.x - source.x
+#     lenY = destination.y - source.y
+#     # dirTo=destination-source
+#     if lenY == 0:
+#         source.x += source.speed * timePassedSecond
+#     elif lenX == 0:
+#         source.y += source.speed * timePassedSecond
 
 
 #==================边界限制方法====================
@@ -522,7 +498,7 @@ def getList(Tlist,Tarray):
 
 #=========================初始化方法==========================
 def init():
-    global surface,clock,player,enemy,background,tank1,tank2,tank3,startPage,pauseBackground,overImg
+    global surface,clock,player,background,tank1,tank2,tank3,startPage,pauseBackground,overImg,enemies
     surface = pygame.display.set_mode((surface_WIDTH, surface_HEIGHT), 0, 32)
     pygame.display.set_caption("坦克大战")
     background = pygame.image.load("../resources/img/background.png").convert()
@@ -537,7 +513,7 @@ def init():
     overImg = pygame.image.load("../resources/img/fail.png").convert_alpha()
     clock = pygame.time.Clock()
     player = Player(320, 240)
-    enemy = Enemy(400,400)
+    # enemy = Enemy(400,300)
     startPage = StartPage()
 
     i = 1
@@ -589,10 +565,10 @@ def randomMap():
 def update():
     if not isGameOver:
         player.update()
+    for enemy in enemies:
         enemy.update()
     crash()
     bulletsUpdate()
-    bulletsUpdate1()
     blocksUpdate()
 
 #========================显示 绘制 方法========================
@@ -602,59 +578,100 @@ def display():
         mps.display()
     if not isGameOver:
         player.display()
-        enemy.display()
         for bullet in playerBullets:
             bullet.display()
-        for enemybullet in enemyBullets:
-            enemybullet.display()
+    for bullet in enemyBullets:
+        bullet.display()
+    for enemy in enemies:
+        enemy.display()
 
 def bulletsUpdate():
     needRemove = []
+    removeNeed = []
     for bullet in playerBullets:
         if not bullet.isAlive:
             needRemove.append(bullet)
         bullet.update()
-    for bullet in needRemove:
-        playerBullets.remove(bullet)
-def bulletsUpdate1():
-    needRemove = []
     for bullet in enemyBullets:
         if not bullet.isAlive:
-            needRemove.append(bullet)
+            removeNeed.append(bullet)
         bullet.update()
     for bullet in needRemove:
+        playerBullets.remove(bullet)
+    for bullet in removeNeed:
         enemyBullets.remove(bullet)
+
 def crash():
     if not isGameOver:
         playerCrashBlock()
-        playerBulletCrashBlock()
+        enemyCrashBlock()
+        playerBulletCrash()
+        enemyBulletCrash()
+        playerCrashEnemy()
+        EnemyCrashEnemy()
 
 
 def playerCrashBlock():
     for blk in mapList:
         if blk.type:
             player.isCrash(blk)
-            enemy.isCrash(blk)
 
-def playerBulletCrashBlock():
+def playerCrashEnemy():
+    for enemy in enemies:
+        player.isCrash(enemy)
+        enemy.isCrash(player)
+
+def EnemyCrashEnemy():
+    for enemy1 in enemies:
+        for enemy2 in enemies:
+            if enemy1 != enemy2:
+                enemy1.isCrash(enemy2)
+
+def enemyCrashBlock():
+    for blk in mapList:
+        for enemy in enemies:
+            if blk.type:
+                enemy.isCrash(blk)
+
+def playerBulletCrash():
     for p_b in playerBullets:
         for blk in mapList:
             if blk.type:
                 if p_b.isCrash(blk) and p_b.isAlive and blk.isAlive:
                     blk.hurt(p_b)
                     p_b.isAlive = False
+        for enemy in enemies:
+            if p_b.isCrash(enemy) and p_b.isAlive and enemy.isAlive:
+                enemy.hurt(p_b)
+                p_b.isAlive = False
+
+
+def enemyBulletCrash():
+    for p_b in enemyBullets:
+        for blk in mapList:
+            if blk.type:
+                if p_b.isCrash(blk) and p_b.isAlive and blk.isAlive:
+                    blk.hurt(p_b)
+                    p_b.isAlive = False
+        if p_b.isCrash(player) and p_b.isAlive and player.isAlive:
+            player.hurt(p_b)
+            p_b.isAlive = False
+
 # 开始游戏界面
 # def showGame():
 #     if(gameMode == False):
 #         surface.blit(beforeStart, (0, 0))
 # 真正的初始化
 def startGame():
-    global gameCount,mapList
+    global gameCount,mapList,randomDir,mapArrayIndex
+    randomDir = random.randint(1, 4)
     mapArrayIndex = randomMap()
+    mapArrayIndex[6][8] = 0
     mapList = []  # 地图表，存储障碍物精灵图片
     init()  # 初始化
     getList(mapList, mapArrayIndex)  # 根据障碍物位置信息填写地图表
     gameCount = 0
+
 
 def blocksUpdate():
     for blk in mapList:
@@ -681,12 +698,10 @@ gameTime = 0        #游戏总时间
 surface_WIDTH=600   #屏幕宽度
 surface_HEIGHT=400  #屏幕高度
 # bgColor = (55,45,85)
-
+enemies = [] #敌人数组
 playerBullets = [] #玩家子弹
 enemyBullets = [] #敌人子弹
-
-direction=1
-
+randomDir = None
 FPS=60          #最大帧数
 mapBlockLenth=40 #地图块大小
 wallSprite=[]   #障碍物精灵组
@@ -695,11 +710,11 @@ wallNum=12      #障碍物总种类
 tankNum=2       #坦克总数
 gameCount = 0
 player=None     #玩家
-enemy = None
 startPage = None
 isGameOver = False #玩家是否存活
 mapList = None #地图表
 gameOverCount = 0 #
+mapArrayIndex = None
 #障碍物位置信息  15*10
 # mapArrayIndex=[
 #     [0,1,0,0,0,4,0,2,0,0,0,3,2,0,0,0],
@@ -732,6 +747,11 @@ startGame()
 pause=False
 
 while True:
+    while (len(enemies) < 3):
+        enemy = Enemy(random.randint(1,14)*40,random.randint(1,9)*40)
+        mapArrayIndex[enemy.y//40][enemy.x//40] = 0
+        enemies.append(enemy)
+
     gameCount += 1
     if gameCount == 1000000:
         gameCount = 0
@@ -755,8 +775,7 @@ while True:
     # for mps in mapList:
     #     mps.drawWall(surface)
     #     print(mp)
-    if gameCount%30 == 0:
-        enemy.fire()
+
 
     if(gameMode == False):
         startPage.display()
