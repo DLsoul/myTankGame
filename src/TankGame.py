@@ -9,7 +9,6 @@ class GameObject(object):
     def __init__(self):
         self.x=None
         self.y=None
-        self.location=Vector2(0,0)
         self.width=40
         self.height=40
         self.isAlive=True
@@ -211,6 +210,152 @@ class Player(GameObject):
                               57 * self.life / 140, 5))
         surface.blit(self.sprite,(self.x,self.y))
 
+
+#========================敌人类=====================
+class Enemy(GameObject):
+    # def __init__(self,x,y):
+    #     super().__init__()
+    #     super().setImage("../resources/img/tank_2.png")
+    #     self.x = x
+    #     self.y = y
+    #     # self.direction=Vector2(0,-1)
+    #     self.direction = 1  # 坦克朝向 1上2右3下4左
+    #     self.needMove = False
+    #     self.speed = 100
+    #     self.life = 100
+    #     self.patrolPath=[]
+    #
+    # def hurt(self):
+    #     pass
+    #
+    # def move(self):
+    #     pass
+    #
+    # def update(self):
+    #     moveDir = Vector2(0, 0) #移动方向
+    #
+    #     if self.direction==1:
+    #         moveDir=Vector2(0,-1)
+    #     elif self.direction == 2:
+    #         moveDir=Vector2(1,0)
+    #     elif self.direction == 3:
+    #         moveDir=Vector2(0,1)
+    #     elif self.direction == 4:
+    #         moveDir=Vector2(-1,0)
+    #
+    #     moveDir.normalise()  # 向量规格化
+    #
+    #     # self.x += moveDir.x * self.speed * timePassedSecond
+    #     # self.y += moveDir.y * self.speed * timePassedSecond
+    #
+    # def patrol(self):
+    #     pathPoint=self.patrolPath.pop()
+    #
+    #
+    # def setPatrolPath(self):
+    #     pass
+    def __init__(self,x,y):
+        super().__init__()
+        super().setImage("../resources/img/tank_2.png")
+        self.x=x
+        self.y=y
+        #self.direction=Vector2(0,-1)
+        self.direction = 1      #坦克朝向 1上2右3下4左
+        self.needMove=False
+        self.speed=50
+        self.life=100
+        self.lifeFrame = pygame.image.load("../resources/img/blood.png")    #血条
+
+    def fire(self):
+        bullet = Bullet(self.x,self.y,self.width,self.height,self.direction)
+        enemyBullets.append(bullet)
+
+    def hurt(self):
+        if gameCount % 10 == 0:
+            self.life -= 5
+
+    def move(self):
+        pass
+
+    def isCrash(self,other):
+        if super().isCrash(other,True) and other.isAlive:
+            return self.direction
+        return 0
+
+    def update(self):
+        global direction
+        #pressedKey = pygame.key.get_pressed()   #获取按键
+        moveDir=Vector2(0,0)    #移动方向
+        #self.hurt() #此处完成后需删除
+        if gameCount%60==0:
+            direction = random.randint(1,4)
+        global isGameOver
+        if self.life <= 0:
+            isGameOver = True
+        if  direction == 1:
+            moveDir.x = -1
+            if self.direction == 1 :
+                self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            elif self.direction == 2:
+                self.sprite = pygame.transform.rotate(self.sprite, 180.)
+            elif self.direction == 3:
+                self.sprite = pygame.transform.rotate(self.sprite, -90.)
+
+            self.direction = 4
+            self.needMove=True
+        elif direction == 2:
+            moveDir.x = 1
+            if self.direction == 1 :
+                self.sprite = pygame.transform.rotate(self.sprite, -90.)
+            elif self.direction == 3:
+                self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            elif self.direction == 4:
+                self.sprite = pygame.transform.rotate(self.sprite, 180.)
+
+            self.direction=2
+            self.needMove = True
+        elif direction == 3:
+            moveDir.y = -1
+            if self.direction == 4 :
+                self.sprite = pygame.transform.rotate(self.sprite, -90.)
+            elif self.direction == 2:
+                self.sprite = pygame.transform.rotate(self.sprite, 90.)
+            elif self.direction == 3:
+                self.sprite = pygame.transform.rotate(self.sprite, 180.)
+
+            self.direction=1
+            self.needMove = True
+        elif direction == 4:
+            moveDir.y = 1
+            if self.direction == 1 :
+                self.sprite = pygame.transform.rotate(self.sprite, 180.)
+            elif self.direction == 2:
+                self.sprite = pygame.transform.rotate(self.sprite, -90.)
+            elif self.direction == 4:
+                self.sprite = pygame.transform.rotate(self.sprite, 90.)
+
+            self.direction=3
+            self.needMove = True
+        # else:
+        #     self.x=0
+        #     self.y=0
+        #     self.needMove=False
+        moveDir.normalise()     #向量规格化
+        self.x += moveDir.x * self.speed * timePassedSecond
+        self.y += moveDir.y * self.speed * timePassedSecond
+        borderLimit(self)
+
+    def changWeapon(self):
+        pass
+
+    def display(self):
+        surface.blit(self.lifeFrame, (self.x, self.y - 5))
+        if self.life > 0:
+            pygame.draw.rect(surface, (255, 0, 0),
+                             (self.x - self.width + 39.8, self.y - self.height + 35,
+                              57 * self.life / 140, 5))
+        surface.blit(self.sprite,(self.x,self.y))
+
 class Bullet(GameObject):
     def __init__(self,x,y,width,height,direction):
         super().__init__()
@@ -260,322 +405,6 @@ class Bullet(GameObject):
     def display(self):
         surface.blit(self.sprite,(self.x, self.y))
 
-#========================敌人类=====================
-class Enemy(GameObject):
-    def __init__(self,x,y,world,name,image):
-        super().__init__()
-        super().setImage("../resources/img/%s.png"%image)
-        self.id = 0
-        self.x = x
-        self.y = y
-        # self.direction=Vector2(0,-1)
-        self.direction = Vector2(0,-1)  # 向量表示坦克朝向
-        self.needMove = False
-        self.speed = 100
-        self.life = 100
-        self.patrolPath=[]
-        #self.setPatrolPath([(self.x+120,self.y),(self.x+80,self.y-120),(self.x+120,self.y-120),(self.x,self.y-120),(self.x,self.y)])
-        self.target=Vector2(self.x+80,self.y)  #目标点
-        self.arriveDist=0.5         #判定到达距离
-        self.speedDownDist=10       #开始减速距离
-        self.needToPatrol=False     #是否进行巡逻
-        self.pointCount=0           #巡逻点计数
-        self.brain=StateMachine()   #大脑
-        self.world=world            #敌人世界信息
-        self.name=name              #敌人名称
-        self.standardPos = Vector2(self.x // 40, self.y // 40)  # 标准位置
-
-    def hurt(self):
-        pass
-
-    def move(self):
-        pass
-
-    def thinkover(self):
-        pass
-
-    def update(self):
-        pass
-        # moveDir = Vector2(0, 0) #移动方向
-        #
-        # if self.direction==1:
-        #     moveDir=Vector2(0,-1)
-        # elif self.direction == 2:
-        #     moveDir=Vector2(1,0)
-        # elif self.direction == 3:
-        #     moveDir=Vector2(0,1)
-        # elif self.direction == 4:
-        #     moveDir=Vector2(-1,0)
-        #
-        # moveDir.normalise()  # 向量规格化
-        #
-        # if self.needToPatrol:
-        #     self.patrol()
-        # self.brain.think()
-        # if self.speed > 0. and self.location != self.destination:
-        #     vecToDestination = self.destination - self.location
-        #     distanceToDestination = vecToDestination.get_length()
-        #     heading = vecToDestination.get_normalized()
-        #     travelDistance = min(distanceToDestination, timePassedSecond * self.speed)
-        #     self.location += travelDistance * heading
-        # borderLimit(self)
-        # self.x += moveDir.x * self.speed * timePassedSecond
-        # self.y += moveDir.y * self.speed * timePassedSecond
-
-    def patrol(self):
-        #self.target = self.patrolPath[self.pointCount]
-        if self.pointCount < len(self.patrolPath)-1:
-            if distanceTo(self,self.target)<self.arriveDist:
-                self.x,self.y=self.target.x,self.target.y
-                self.pointCount+=1
-                self.target = self.patrolPath[self.pointCount]
-            else:
-                arrive(self,self.target,self.speedDownDist)
-        else:
-            if distanceTo(self,self.target)<self.arriveDist:
-                self.x,self.y=self.target.x,self.target.y
-                self.needToPatrol=False
-            else:
-                arrive(self,self.target,self.speedDownDist)
-
-    def setTarget(self,tar):
-        self.target=tar
-
-    def setPatrolPath(self,points):
-        # p1=Vector2(points[0][0],points[0][1])
-        # p2 = Vector2(points[1][0], points[1][1])
-        self.patrolPath=[]
-        for pot in points:
-            p=Vector2(pot[0],pot[1])
-            self.patrolPath.append(p)
-        self.needToPatrol=True
-
-#==================坦克2类======================
-class TankEnemy2(Enemy):
-    def __init__(self,x,y,world,image):
-        super().__init__(x,y,world,"Tank2",image)
-        foolState = FoolState(self)
-        enemyPatrolState = EnemyPatrolState(self)
-        searchTargetState = SearchTargetState(self)
-        fleeState = FleeState(self)
-        self.brain.addState(foolState)
-        self.brain.addState(enemyPatrolState)
-        self.brain.addState(searchTargetState)
-        self.brain.addState(fleeState)
-        self.brain.setState("Fool")
-
-    def hurt(self):
-        pass
-
-    def fire(self):
-        pass
-
-    def update(self):
-        self.brain.think()
-
-#==================状态基类===============
-class State(object):
-    def __init__(self,name):
-        self.name=name
-
-    def update(self):
-        pass
-
-    #考虑状态转换
-    def checkConditions(self):
-        pass
-
-    def entryActions(self):
-        pass
-
-    def exitActions(self):
-        pass
-
-#===================状态转换机==============
-class StateMachine(object):
-    def __init__(self):
-        self.states={}
-        self.activeState=None
-
-    #添加状态列表
-    def addState(self,state):
-        self.states[state.name]=state
-
-    #考虑状态转换方向
-    def think(self):
-        if self.activeState is None:
-            return
-        self.activeState.update()
-        newStateName=self.activeState.checkConditions()
-        if newStateName is not None:
-            self.setState(newStateName)
-
-    #状态转换方法
-    def setState(self,newStateName):
-        if self.activeState is not None:
-            self.activeState.exitActions()
-        self.activeState=self.states[newStateName]
-        self.activeState.entryActions()
-
-#=================敌人世界类=============================
-class EnemyWorld(object):
-    def __init__(self):
-        self.enemies={}
-        self.enemyID=0
-
-    def addEnemy(self,enemy):
-        self.enemies[self.enemyID]=enemy
-        enemy.id =self.enemyID
-        self.enemyID+=1
-
-    def removeEnemy(self,enemy):
-        del self.enemies[enemy.id]
-
-    #根据敌人ID获取敌人实例
-    def get(self,enemyID):
-        if enemyID in self.enemies:
-            return self.enemies[enemyID]
-        else:
-            return None
-
-    #
-    def process(self):
-        for enemy in self.enemies.values():
-            enemy.process(timePassedSecond)
-
-    def display(self):
-        # values()方法实际上把一个dict转换成了包含value的list。
-        # 但是 itervalues() 方法不会转换，它会在迭代过程中依次从 dict 中取出 value，
-        # 所以 itervalues() 方法比 values() 方法节省了生成 list 所需的内存。
-        for enemy in self.enemies.itervalues():
-            enemy.display()
-
-    #获取四周贴身坦克
-    def getCloseEnemy(self,name,location,range=40.):
-        for enemy in self.enemies.itervalues():
-            if enemy.name == name:
-                distance = distanceTo(location,enemy.location)
-                if distance<range:
-                    return enemy
-        return None
-
-#=============傻逼状态======================
-class FoolState(State):
-    def __init__(self,tank):
-        State.__init__(self,"Fool")
-        self.tank=tank
-
-    def update(self):
-        # print(self.tank.standardPos)
-        if distanceTo(self.tank, self.tank.standardPos) < self.tank.arriveDist:
-            print("位置规格化")
-            arrive(self.tank,self.tank.standardPos,self.tank.speedDownDist)
-        else:
-            if self.tryObstacle(self.tank.direction):
-                arrive(self.tank,self.tank.target,self.tank.speedDownDist)
-            else:
-                i=random.randint(1,3)
-                print("(randomint):%d"%i)
-                x,y=self.tank.direction
-                print("原來direction坐標(x,y):%d,%d"%(x,y))
-                if i==1:        #[x*cos90-y*sin90,x*sin90+y*cos90]
-                    self.tank.direction.x=-y
-                    self.tank.direction.y=x
-                elif i==2:
-                    self.tank.direction.x = -x
-                    self.tank.direction.y = -y
-                elif i==3:
-                    self.tank.direction.x = y
-                    self.tank.direction.y = -x
-
-    def checkConditions(self):
-        pass
-        # tank = self.tank.world.getCloseEnemy("tank2",self.tank.location)
-        # if tank is not None:
-
-    def entryActions(self):
-        pass
-
-    def tryObstacle(self,direction):
-        x=self.tank.x//40 +1
-        y=self.tank.y//40 +1
-        print("对应地图数组下标:",(x,y))
-        tar=Vector2(x,y)+direction
-
-        print("方向：",direction)
-        print("目标",tar)
-        block = self.findMapBlock(tar)
-        # print(block)
-        if block.type == 0:
-            self.tank.target=Vector2(block.x,block.y)
-            return True
-        return False
-
-    def findMapBlock(self,point):
-        return mapList[int(point.x+15*point.y)]
-
-
-#===========巡逻状态===================
-class EnemyPatrolState(State):
-    def __init__(self,tank):
-        State.__init__(self,"Patrol")
-        self.tank=tank
-
-    def randomDestination(self):
-        self.tank.destination=Vector2(random.randint(0,14)*mapBlockLenth,random.randint(0,9)*mapBlockLenth)
-
-    def update(self):
-        if random.randint(1,20)==1:
-            self.randomDestination(self)
-
-    def checkConditions(self):
-        pass
-        # tank = self.tank.world.getCloseEnemy("tank2",self.tank.location)
-        # if tank is not None:
-
-    def entryActions(self):
-
-        self.tank.setPatrolPath(self.tank.patrolPath)
-
-#=====================索敌状态======================
-class SearchTargetState(State):
-    def __init__(self, tank):
-        State.__init__(self, "Search")
-        self.tank = tank
-
-    def update(self):
-        pass
-
-    def checkConditions(self):
-        pass
-        # tank = self.tank.world.getCloseEnemy("tank2",self.tank.location)
-        # if tank is not None:
-
-    def entryActions(self):
-        self.tank.setPatrolPath(self.tank.patrolPath)
-
-    def exitActions(self):
-        super().exitActions()
-
-#==============逃跑状态========================
-class FleeState(State):
-    def __init__(self, tank):
-        State.__init__(self, "Flee")
-        self.tank = tank
-
-    def update(self):
-        pass
-
-    def checkConditions(self):
-        pass
-
-    def entryActions(self):
-        pass
-
-    def exitActions(self):
-        pass
-
-
 #=============开始菜单=============
 class StartPage(object):
     def __init__(self):
@@ -599,45 +428,26 @@ class StartPage(object):
                 num = gameCount % 10
                 surface.blit(self.beforeStart[num], (0, 0))
 
-    def update(self):
-        if self.life<=0:
-            self.world.removeEntity(self)
-            return
-        Enemy.update()
-
-#===================A*寻路===============
-def findPath(source,target):
-    pointPath=[]
-    #to do
-    return pointPath
-
-#===================两点距离================
-def distanceTo(source,target):
-    lenX = target.x - source.x
-    lenY = target.y - source.y
-    return math.sqrt(lenX*lenX+lenY*lenY)
-
 #============操控行为方法================
-#到达
-def arrive(source,destination,speedDownDist):
+def arrive(source,destination):
     lenX=destination.x-source.x
     lenY=destination.y-source.y
     # dirTo=destination-source
     if lenY==0:
-        if lenX > speedDownDist:
+        if lenX > 10:
             source.x+=source.speed * timePassedSecond
-        elif lenX <-speedDownDist:
+        elif lenX <-10:
             source.x -= source.speed * timePassedSecond
         else :
-            source.x+=source.speed*timePassedSecond*lenX/speedDownDist
+            source.x+=source.speed*timePassedSecond*lenX/10.
     elif lenX==0:
-        if lenY > speedDownDist:
+        if lenY > 10:
             source.y+=source.speed * timePassedSecond
-        elif lenY<-speedDownDist:
+        elif lenY<-10:
             source.y -= source.speed * timePassedSecond
         else :
-            source.y+=source.speed*timePassedSecond*lenY/speedDownDist
-#靠近
+            source.y+=source.speed*timePassedSecond*lenY/10.
+
 def seek(source,destination):
     lenX = destination.x - source.x
     lenY = destination.y - source.y
@@ -712,7 +522,7 @@ def getList(Tlist,Tarray):
 
 #=========================初始化方法==========================
 def init():
-    global enemyTank,enemyWorld,surface,clock,player,background,tank1,tank2,tank3,overImg,startPage,pauseBackground,overImg
+    global surface,clock,player,enemy,background,tank1,tank2,tank3,startPage,pauseBackground,overImg
     surface = pygame.display.set_mode((surface_WIDTH, surface_HEIGHT), 0, 32)
     pygame.display.set_caption("坦克大战")
     background = pygame.image.load("../resources/img/background.png").convert()
@@ -727,8 +537,7 @@ def init():
     overImg = pygame.image.load("../resources/img/fail.png").convert_alpha()
     clock = pygame.time.Clock()
     player = Player(320, 240)
-    enemyWorld=EnemyWorld()
-    enemyTank.append(TankEnemy2(400,280,enemyWorld,"tank_2"))
+    enemy = Enemy(400,400)
     startPage = StartPage()
 
     i = 1
@@ -776,16 +585,15 @@ def randomMap():
         generatedMap.append(mapRow)
         i+=1
     return generatedMap
-
 #=========================总更新方法======================
 def update():
     if not isGameOver:
         player.update()
+        enemy.update()
     crash()
     bulletsUpdate()
+    bulletsUpdate1()
     blocksUpdate()
-    for enemy in enemyTank:
-        enemy.update()
 
 #========================显示 绘制 方法========================
 def display():
@@ -794,10 +602,11 @@ def display():
         mps.display()
     if not isGameOver:
         player.display()
+        enemy.display()
         for bullet in playerBullets:
             bullet.display()
-    for enemy in enemyTank:
-        enemy.display()
+        for enemybullet in enemyBullets:
+            enemybullet.display()
 
 def bulletsUpdate():
     needRemove = []
@@ -807,7 +616,14 @@ def bulletsUpdate():
         bullet.update()
     for bullet in needRemove:
         playerBullets.remove(bullet)
-
+def bulletsUpdate1():
+    needRemove = []
+    for bullet in enemyBullets:
+        if not bullet.isAlive:
+            needRemove.append(bullet)
+        bullet.update()
+    for bullet in needRemove:
+        enemyBullets.remove(bullet)
 def crash():
     if not isGameOver:
         playerCrashBlock()
@@ -818,6 +634,7 @@ def playerCrashBlock():
     for blk in mapList:
         if blk.type:
             player.isCrash(blk)
+            enemy.isCrash(blk)
 
 def playerBulletCrashBlock():
     for p_b in playerBullets:
@@ -866,8 +683,9 @@ surface_HEIGHT=400  #屏幕高度
 # bgColor = (55,45,85)
 
 playerBullets = [] #玩家子弹
-enemyTank=[]
-enemyWorld=None
+enemyBullets = [] #敌人子弹
+
+direction=1
 
 FPS=60          #最大帧数
 mapBlockLenth=40 #地图块大小
@@ -877,6 +695,7 @@ wallNum=12      #障碍物总种类
 tankNum=2       #坦克总数
 gameCount = 0
 player=None     #玩家
+enemy = None
 startPage = None
 isGameOver = False #玩家是否存活
 mapList = None #地图表
@@ -936,7 +755,8 @@ while True:
     # for mps in mapList:
     #     mps.drawWall(surface)
     #     print(mp)
-
+    if gameCount%30 == 0:
+        enemy.fire()
 
     if(gameMode == False):
         startPage.display()
