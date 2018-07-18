@@ -1,4 +1,3 @@
-
 import pygame,os,sys,math,random
 from pygame.locals import *
 from sys import exit
@@ -46,6 +45,18 @@ class Map(GameObject):
         self.sprite=wallSprite[type-1]
         self.type=type
         self.width,self.height=self.sprite.get_size()
+        self.boom_index = 0
+        self.boom_img = []
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_11.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_12.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_13.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_14.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_15.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_16.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_17.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_18.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_19.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_20.png"))
 
     #用于检测在此方块上的碰撞
     def isCrash(self,other):
@@ -62,7 +73,15 @@ class Map(GameObject):
         surface.blit(self.sprite,(self.x,self.y))
 
     def update(self):
-        pass
+        if self.isAlive == False:
+            if self.boom_index >= len(self.boom_img):
+                mapList.remove(self)
+                self.isAlive = False
+                self.boom_index = len(self.boom_img) - 1
+            self.sprite = self.boom_img[self.boom_index]
+            #print(game_count)
+            if gameCount % 5 == 0:
+                self.boom_index += 1
 
     def __str__(self):
         return "坐标(%d,%d),地图%d"%(self.x,self.y,self.type)
@@ -79,11 +98,10 @@ class Player(GameObject):
         self.needMove=False
         self.speed=100
         self.life=100
-        #self.lifeFrame=        #血条
-
+        self.lifeFrame = pygame.image.load("../resources/img/blood.png")    #血条
     def fire(self):
         bullet = Bullet(self.x,self.y,self.width,self.height,self.direction)
-        player_bullets.append(bullet)
+        playerBullets.append(bullet)
 
     def hurt(self):
         pass
@@ -155,6 +173,11 @@ class Player(GameObject):
         pass
 
     def display(self):
+        surface.blit(self.lifeFrame, (self.x, self.y - 5))
+        if self.life > 0:
+            pygame.draw.rect(surface, (255, 0, 0),
+                             (self.x - self.width + 39.8, self.y - self.height + 35,
+                              57 * self.life / 140, 5))
         surface.blit(self.sprite,(self.x,self.y))
 
 class Bullet(GameObject):
@@ -187,6 +210,14 @@ class Bullet(GameObject):
             self.ySpeed = 0
             self.x = x - self.width
             self.y = y + height/2 -self.height/2
+
+    def isCrash(self,other):
+        if self.x < other.x + other.width-15 \
+                and self.x + self.width > other.x +15 \
+                and self.y < other.y + other.height-15  \
+                and self.y + self.height > other.y+15 :
+            return True
+        return False
 
     def update(self):
         self.x += self.xSpeed
@@ -377,12 +408,28 @@ def init():
         wallSprite.append(sprite)
         i += 1
 
-
+#=========================随机地图======================
+def randomMap():
+    i=1
+    generatedMap=[]
+    while i<=10:
+        mapRow =[]
+        j = 1
+        while j<=15:
+            if random.random()<=0.75:
+                mapRow.append(0)
+            else:
+                mapRow.append(random.randint(1,12))
+            j+=1
+        generatedMap.append(mapRow)
+        i+=1
+    return generatedMap
 #=========================总更新方法======================
 def update():
     crash()
     player.update()
-    bullets_update()
+    bulletsUpdate()
+    blocksUpdate()
     for enemy in enemyTank:
         enemy.update()
 
@@ -392,25 +439,27 @@ def display():
     for mps in mapList:
         mps.display()
     player.display()
-    for bullet in player_bullets:
+    for bullet in playerBullets:
         bullet.display()
     for enemy in enemyTank:
         enemy.display()
 
-def bullets_update():
-    need_remove = []
-    for bullet in player_bullets:
+def bulletsUpdate():
+    needRemove = []
+    for bullet in playerBullets:
         if not bullet.isAlive:
-            need_remove.append(bullet)
+            needRemove.append(bullet)
         bullet.update()
-    for bullet in need_remove:
-        player_bullets.remove(bullet)
+    for bullet in needRemove:
+        playerBullets.remove(bullet)
 
 def crash():
-    player_crash_block()
+    playerCrashBlock()
+    playerBulletCrashBlock()
 
 
-def player_crash_block():
+
+def playerCrashBlock():
     for blk in mapList:
         if blk.type:
             if player.isCrash(blk) == 1:
@@ -421,6 +470,26 @@ def player_crash_block():
                 player.y = blk.y - 40
             elif player.isCrash(blk) == 4:
                 player.x = blk.x + 40
+
+def playerBulletCrashBlock():
+    for p_b in playerBullets:
+        for blk in mapList:
+            if blk.type:
+                if p_b.isCrash(blk):
+                    blk.isAlive = False
+                    p_b.isAlive = False
+
+def blocksUpdate():
+
+    for blk in mapList:
+        if blk.type:
+            #print(blk.isAlive)
+            #if not blk.isAlive:
+                #mapList.remove(blk)
+            #need_remove.append(blk)
+            blk.update()
+    # for blk in need_remove:
+    #     mapList.remove(blk)
 
 surface = None
 clock = None
@@ -435,32 +504,33 @@ surface_WIDTH=600   #屏幕宽度
 surface_HEIGHT=400  #屏幕高度
 # bgColor = (55,45,85)
 
-player_bullets = [] #玩家子弹
+playerBullets = [] #玩家子弹
 enemyTank=[]
 
 FPS=60          #最大帧数
 mapBlockLenth=40 #地图块大小
 wallSprite=[]   #障碍物精灵组
 tankSprite=[]   #坦克精灵组
-wallNum=6      #障碍物总数
+wallNum=12      #障碍物总种类
 tankNum=2       #坦克总数
 
 player=None     #玩家
 
 #障碍物位置信息  15*10
-mapArrayIndex=[
-    [0,1,0,0,0,4,0,2,0,0,0,3,2,0,0,0],
-    [0,0,0,0,2,0,4,0,0,0,0,0,0,1,2,0],
-    [0,0,0,1,5,0,0,0,3,0,0,0,3,1,0,0],
-    [2,0,0,1,0,6,1,0,0,0,0,0,0,5,0,1],
-    [0,0,3,1,0,0,0,3,0,1,2,0,0,0,2,1],
-    [0,2,6,0,0,5,0,0,0,0,0,2,0,0,0,1],
-    [0,3,0,1,0,1,0,6,0,0,0,0,3,0,3,6],
-    [0,0,0,1,0,1,0,3,1,0,0,1,0,1,5,2],
-    [0,0,3,0,0,0,0,0,0,0,2,6,0,1,4,6],
-    [0,0,2,1,6,0,0,5,0,4,0,6,1,0,2,1],
-    #[0,0,0,1,2,0,0,0,3,0,0,0,3,1,0,0],
-    ]
+# mapArrayIndex=[
+#     [0,1,0,0,0,4,0,2,0,0,0,3,2,0,0,0],
+#     [0,0,0,0,2,0,4,0,0,0,0,0,0,1,2,0],
+#     [0,0,0,1,5,0,0,0,3,0,0,0,3,1,0,0],
+#     [2,0,0,1,0,6,1,0,0,0,0,0,0,5,0,1],
+#     [0,0,3,1,0,0,0,3,0,1,2,0,0,0,2,1],
+#     [0,2,6,0,0,5,0,0,0,0,0,2,0,0,0,1],
+#     [0,3,0,1,0,1,0,6,0,0,0,0,3,0,3,6],
+#     [0,0,0,1,0,1,0,3,1,0,0,1,0,1,5,2],
+#     [0,0,3,0,0,0,0,0,0,0,2,6,0,1,4,6],
+#     [0,0,2,1,6,0,0,5,0,4,0,6,1,0,2,1],
+#     #[0,0,0,1,2,0,0,0,3,0,0,0,3,1,0,0],
+#     ]
+mapArrayIndex=randomMap()
 mapList=[]      #地图表，存储障碍物精灵图片
 init()          #初始化
 getList(mapList,mapArrayIndex)  #根据障碍物位置信息填写地图表
@@ -470,7 +540,7 @@ surface.blit(background,(0,0))
 # for mps in mapList:
 #     mps.display(surface)
 #     print(mps)
-
+gameCount = 0
 while True:
     eventListener() #事件监听
     timePassed = clock.tick(FPS)  # 获取时间ms
