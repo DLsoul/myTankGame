@@ -144,7 +144,7 @@ class Player(GameObject):
     def update(self):
         #pressedKey = pygame.key.get_pressed()   #获取按键
         moveDir=Vector2(0,0)    #移动方向
-        self.hurt() #此处完成后需删除
+        #self.hurt() #此处完成后需删除
         global isGameOver
         if self.life <= 0:
             isGameOver = True
@@ -467,15 +467,18 @@ class FoolState(State):
         self.tank=tank
 
     def update(self):
-
+        # print(self.tank.standardPos)
         if distanceTo(self.tank, self.tank.standardPos) < self.tank.arriveDist:
+            print("位置规格化")
             arrive(self.tank,self.tank.standardPos,self.tank.speedDownDist)
         else:
             if self.tryObstacle(self.tank.direction):
                 arrive(self.tank,self.tank.target,self.tank.speedDownDist)
             else:
                 i=random.randint(1,3)
+                print("(randomint):%d"%i)
                 x,y=self.tank.direction
+                print("原來direction坐標(x,y):%d,%d"%(x,y))
                 if i==1:        #[x*cos90-y*sin90,x*sin90+y*cos90]
                     self.tank.direction.x=-y
                     self.tank.direction.y=x
@@ -486,8 +489,6 @@ class FoolState(State):
                     self.tank.direction.x = y
                     self.tank.direction.y = -x
 
-        # self.tank.
-
     def checkConditions(self):
         pass
         # tank = self.tank.world.getCloseEnemy("tank2",self.tank.location)
@@ -497,17 +498,22 @@ class FoolState(State):
         pass
 
     def tryObstacle(self,direction):
-        x=self.tank.x//40
-        y=self.tank.y//40
-        tar=Vector2(x,y)+direction*mapBlockLenth
+        x=self.tank.x//40 +1
+        y=self.tank.y//40 +1
+        print("对应地图数组下标:",(x,y))
+        tar=Vector2(x,y)+direction
+
+        print("方向：",direction)
+        print("目标",tar)
         block = self.findMapBlock(tar)
+        # print(block)
         if block.type == 0:
             self.tank.target=Vector2(block.x,block.y)
             return True
         return False
 
     def findMapBlock(self,point):
-        return mapList[int(point.x//40+15*point.y//40)]
+        return mapList[int(point.x+15*point.y)]
 
 
 #===========巡逻状态===================
