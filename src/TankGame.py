@@ -303,7 +303,6 @@ class Enemy(GameObject):
             p=Vector2(pot[0],pot[1])
             self.patrolPath.append(p)
 
-
 def distanceTo(source,target):
     lenX = target.x - source.x
     lenY = target.y - source.y
