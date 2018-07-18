@@ -378,7 +378,7 @@ def randomMap():
         mapRow =[]
         j = 1
         while j<=15:
-            if random.random()<=0.75:
+            if random.random()<=0.5:
                 mapRow.append(0)
             else:
                 mapRow.append(random.randint(1,12))
@@ -414,7 +414,6 @@ def bulletsUpdate():
 def crash():
     playerCrashBlock()
     playerBulletCrashBlock()
-
 
 
 def playerCrashBlock():
