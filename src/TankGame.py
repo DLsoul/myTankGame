@@ -9,6 +9,7 @@ class GameObject(object):
     def __init__(self):
         self.x=None
         self.y=None
+        self.location=Vector2(0,0)
         self.width=40
         self.height=40
         self.isAlive=True
@@ -230,9 +231,10 @@ class Bullet(GameObject):
 
 #========================敌人类=====================
 class Enemy(GameObject):
-    def __init__(self,x,y):
+    def __init__(self,x,y,world,name,image):
         super().__init__()
-        super().setImage("../resources/img/tank_2.png")
+        super().setImage("../resources/img/%s.png"%image)
+        self.id = 0
         self.x = x
         self.y = y
         # self.direction=Vector2(0,-1)
@@ -247,6 +249,9 @@ class Enemy(GameObject):
         self.speedDownDist=10       #开始减速距离
         self.needToPatrol=True     #是否进行巡逻
         self.pointCount=0           #巡逻点计数
+        self.brain=StateMachine()   #大脑
+        self.world=world            #敌人世界信息
+        self.name=name              #敌人名称
 
     def hurt(self):
         pass
@@ -258,31 +263,39 @@ class Enemy(GameObject):
         pass
 
     def update(self):
-        moveDir = Vector2(0, 0) #移动方向
-
-        if self.direction==1:
-            moveDir=Vector2(0,-1)
-        elif self.direction == 2:
-            moveDir=Vector2(1,0)
-        elif self.direction == 3:
-            moveDir=Vector2(0,1)
-        elif self.direction == 4:
-            moveDir=Vector2(-1,0)
-
-        moveDir.normalise()  # 向量规格化
-
-        if self.needToPatrol:
-            self.patrol()
+        # moveDir = Vector2(0, 0) #移动方向
+        #
+        # if self.direction==1:
+        #     moveDir=Vector2(0,-1)
+        # elif self.direction == 2:
+        #     moveDir=Vector2(1,0)
+        # elif self.direction == 3:
+        #     moveDir=Vector2(0,1)
+        # elif self.direction == 4:
+        #     moveDir=Vector2(-1,0)
+        #
+        # moveDir.normalise()  # 向量规格化
+        #
+        # if self.needToPatrol:
+        #     self.patrol()
+        self.brain.think()
+        if self.speed > 0. and self.location != self.destination:
+            vecToDestination = self.destination - self.location
+            distanceToDestination = vecToDestination.get_length()
+            heading = vecToDestination.get_normalized()
+            travelDistance = min(distanceToDestination, timePassedSecond * self.speed)
+            self.location += travelDistance * heading
+        borderLimit(self)
         # self.x += moveDir.x * self.speed * timePassedSecond
         # self.y += moveDir.y * self.speed * timePassedSecond
 
     def patrol(self):
-        self.target = self.patrolPath[self.pointCount]
+        #self.target = self.patrolPath[self.pointCount]
         if self.pointCount < len(self.patrolPath)-1:
             if distanceTo(self,self.target)<self.arriveDist:
                 self.x,self.y=self.target.x,self.target.y
                 self.pointCount+=1
-                # self.target = self.patrolPath[self.pointCount]
+                self.target = self.patrolPath[self.pointCount]
             else:
                 arrive(self,self.target,self.speedDownDist)
         else:
@@ -302,7 +315,154 @@ class Enemy(GameObject):
         for pot in points:
             p=Vector2(pot[0],pot[1])
             self.patrolPath.append(p)
+        self.needToPatrol=True
 
+class TankEnemy2(Enemy):
+    def __init__(self,world,image):
+        super().__init__(self,world,"Tank2",image)
+        self.life=25
+        self.speed=50.+ random.randint(-20,20)
+
+
+    def hurt(self):
+        pass
+
+    def fire(self):
+        pass
+
+    def update(self):
+        if self.life<=0:
+            self.world.removeEntity(self)
+            return
+        Enemy.update()
+
+class State(object):
+    def __init__(self,name):
+        self.name=name
+
+    def update(self):
+        pass
+
+    def checkConditions(self):
+        pass
+
+    def entryActions(self):
+        pass
+
+    def exitActions(self):
+        pass
+
+class StateMachine(object):
+    def __init__(self):
+        self.states={}
+        self.activeState=None
+
+    def addState(self,state):
+        self.states[state.name]=state
+
+    def think(self):
+        if self.activeState in None:
+            return
+        self.activeState.update()
+        newStateName=self.activeState.checkConditions()
+        if newStateName is not None:
+            self.setState(newStateName)
+
+    def setState(self,newStateName):
+        if self.activeState is not None:
+            self.activeState.exitActions()
+        self.activeState=self.states[newStateName]
+        self.activeState.entryActions()
+
+class EnemyWorld(object):
+    def __init__(self):
+        self.enemies={}
+        self.enemyID=0
+
+    def addEnemy(self,enemy):
+        self.enemies[self.enemyID]=enemy
+        enemy.id =self.enemyID
+        self.enemyID+=1
+
+    def removeEnemy(self,enemy):
+        del self.enemies[enemy.id]
+
+    #根据敌人ID获取敌人实例
+    def get(self,enemyID):
+        if enemyID in self.enemies:
+            return self.enemies[enemyID]
+        else:
+            return None
+
+    #
+    def process(self):
+        for enemy in self.enemies.values():
+            enemy.process(timePassedSecond)
+
+    def display(self):
+        # values()方法实际上把一个dict转换成了包含value的list。
+        # 但是 itervalues() 方法不会转换，它会在迭代过程中依次从 dict 中取出 value，
+        # 所以 itervalues() 方法比 values() 方法节省了生成 list 所需的内存。
+        for enemy in self.enemies.itervalues():
+            enemy.display()
+
+    #获取四周贴身坦克
+    def getCloseEnemy(self,name,location,range=40.):
+        for enemy in self.enemies.itervalues():
+            if enemy.name == name:
+                distance = distanceTo(location,enemy.location)
+                if distance<range:
+                    return enemy
+        return None
+
+#===========巡逻状态===================
+class EnemyPatrolState(State):
+    def __init__(self,tank):
+        super().__init__(self,"Patrol")
+        self.tank=tank
+
+    def randomDestination(self):
+        self.tank.destination=Vector2(random.randint(0,14)*mapBlockLenth,random.randint(0,9)*mapBlockLenth)
+
+    def update(self):
+        if random.randint(1,20)==1:
+            self.randomDestination(self)
+
+    def checkConditions(self):
+        pass
+        # tank = self.tank.world.getCloseEnemy("tank2",self.tank.location)
+        # if tank is not None:
+
+    def entryActions(self):
+
+        self.tank.setPatrolPath(self.tank.patrolPath)
+
+#=====================索敌状态======================
+class SearchTargetState(State):
+    def __init__(self, tank):
+        super().__init__(self, "Search")
+        self.tank = tank
+
+    def update(self):
+        pass
+
+    def checkConditions(self):
+        pass
+        # tank = self.tank.world.getCloseEnemy("tank2",self.tank.location)
+        # if tank is not None:
+
+    def entryActions(self):
+        self.tank.setPatrolPath(self.tank.patrolPath)
+
+    def exitActions(self):
+        super().exitActions()
+
+def findPath(source,target):
+    pointPath=[]
+    #to do
+    return pointPath
+
+#===================两点距离================
 def distanceTo(source,target):
     lenX = target.x - source.x
     lenY = target.y - source.y
@@ -399,7 +559,7 @@ def init():
     tank3 = pygame.image.load("../resources/img/tank_3.png").convert_alpha()
     clock = pygame.time.Clock()
     player = Player(320, 240)
-    enemyTank.append(Enemy(400,280))
+    #enemyTank.append(Enemy(400,280))
     i = 1
     # 获取墙图片
     while i <= wallNum:
@@ -423,6 +583,7 @@ def randomMap():
         generatedMap.append(mapRow)
         i+=1
     return generatedMap
+
 #=========================总更新方法======================
 def update():
     crash()
