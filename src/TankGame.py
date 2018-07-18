@@ -98,6 +98,11 @@ class Map(GameObject):
                 self.sprite = pygame.image.load("../resources/img/wall_7_%d.png" % (5-self.life)).convert_alpha()
         elif self.isAlive == False:
             if self.boom_index >= len(self.boom_img):
+                if random.randint(0,1) == 0:
+                    if random.randint(0,1) == 0:
+                        hpPackages.append(HpPackage(self.x,self.y))
+                    else:
+                        superBulletPackages.append(SuperBulletPackage(self.x, self.y))
                 mapList.remove(self)
                 self.isAlive = False
                 self.boom_index = len(self.boom_img) - 1
@@ -121,7 +126,7 @@ class Player(GameObject):
         self.needMove=False
         self.speed=100
         self.life=5
-        self.superBulletNum=2
+        # self.superBulletNum=2
         self.lifeFrame = pygame.image.load("../resources/img/blood.png")    #血条
 
     def fire(self):
@@ -131,8 +136,9 @@ class Player(GameObject):
 
 
     def fire1(self):
-        if self.superBulletNum>0:
-            self.superBulletNum -= 1
+        global superBulletNum
+        if superBulletNum>0:
+            superBulletNum -= 1
             superBullet = SuperBullet(self.x, self.y, self.width, self.height, self.direction)
             playerSuperBullets.append(superBullet)
 
@@ -278,10 +284,48 @@ class Battery(GameObject):
         if self.life<=0:
             self.isAlive=False
 
+#=============================道具包基类==========================
 class SupPackage(GameObject):
-    def __init__(self):
+    def __init__(self,x,y):
+        super().__init__()
+        self.x=x
+        self.y=y
+    def isCrash(self):
+        pass
+    def update(self):
+        pass
+    def display(self):
+        surface.blit(self.sprite, (self.x, self.y))
+    def useIt(self,other):
         pass
 
+#===============================血包==========================
+class HpPackage(SupPackage):
+    def __init__(self,x,y):
+        super().__init__(x,y)
+        self.cureHP=2
+        self.sprite=pygame.image.load("../resources/img/hpPackage.png")
+    def update(self):
+        pass
+    def useIt(self,other):
+        other.life+=self.cureHP
+    def display(self):
+        surface.blit(self.sprite, (self.x, self.y))
+
+#===============================榴弹包==========================
+class SuperBulletPackage(SupPackage):
+    def __init__(self,x,y):
+        super().__init__(x,y)
+        self.addSBNum=1
+        self.sprite = pygame.image.load("../resources/img/superBulletNum.png")
+    def update(self):
+        pass
+
+    def useIt(self):
+        global superBulletNum
+        superBulletNum += self.addSBNum
+    def display(self):
+        surface.blit(self.sprite, (self.x, self.y))
 
 
 class Bullet(GameObject):
@@ -786,7 +830,7 @@ def init():
     # afterStart = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
     overImg = pygame.image.load("../resources/img/fail.png").convert_alpha()
     clock = pygame.time.Clock()
-    player = Player(320, 240)
+    player = Player(80, 240)
     bat.append(Battery(560, 180))
     # enemy = Enemy(400,300)
     startPage = StartPage()
@@ -873,12 +917,14 @@ def display():
         bullet.display()
     for enemy in enemies:
         enemy.display()
+    packageDisplay()
     for cld1 in clouds1:
         cld1.display()
     for cld in clouds:
          cld.display()
 
     surface.blit(myfont.render("score:%d" % score, True, (255, 255, 255)),(0,0))
+    surface.blit(myfont.render(u"superBullet:%d"%superBulletNum,True,(255,255,255)),(0,30))
 
 def bulletsUpdate():
     needRemove = []
@@ -904,6 +950,12 @@ def missileUpdate():
     for missile in need_remove:
         batBullets.remove(missile)
 
+def packageDisplay():
+    for p in hpPackages:
+        p.display()
+    for s in superBulletPackages:
+        s.display()
+
 def superBulletsUpdate():
     global score
     needRemove = []
@@ -926,6 +978,7 @@ def superBulletsUpdate():
 def crash():
     if not isGameOver:
         playerCrashBlock()
+        packageCrash()
         enemyCrashBlock()
         playerBulletCrash()
         enemyBulletCrash()
@@ -942,7 +995,7 @@ def MisCrashPlayer():
 
 def playerCrashBlock():
     for blk in mapList:
-        if blk.type:
+        if blk.type and blk.isAlive:
             player.isCrash(blk)
 
 def missileLaunch(player,bat): #导弹发射策略
@@ -1003,6 +1056,29 @@ def enemyBulletCrash():
             player.hurt(p_b)
             p_b.isAlive = False
 
+def packageCrash():
+    needRemove1=[]
+    needRemove2=[]
+    for p in hpPackages:
+        if player.x < p.x + p.width \
+                and (player.x + player.width) > p.x \
+                and player.y < p.y + p.height \
+                and (player.y + player.height) > p.y :
+            p.useIt(player)
+            needRemove1.append(p)
+    for s in superBulletPackages:
+        if player.x < s.x + s.width \
+                and (player.x + player.width) > s.x \
+                and player.y < s.y + s.height \
+                and (player.y + player.height) > s.y :
+            s.useIt()
+            needRemove2.append(s)
+
+    for p in needRemove1:
+        hpPackages.remove(p)
+    for s in needRemove2:
+        superBulletPackages.remove(s)
+
 # 开始游戏界面
 # def showGame():
 #     if(gameMode == False):
@@ -1012,9 +1088,10 @@ def startGame():
     global gameCount,mapList,randomDir,mapArrayIndex,score
     score = 0
     init()
+
     randomDir = random.randint(1, 4)
     mapArrayIndex = randomMap()
-    mapArrayIndex[6][8] = 0
+    mapArrayIndex[6][2] = 0
     mapList = []  # 地图表，存储障碍物精灵图片
     # init()  # 初始化
     getList(mapList, mapArrayIndex)  # 根据障碍物位置信息填写地图表
@@ -1089,6 +1166,11 @@ tank2=None
 tank3=None
 beforeStart = None
 afterStart = None
+
+hpPackages=[]
+superBulletPackages=[]
+
+superBulletNum=2
 timePassed=0        #记录游戏时间，ms
 timePassedSecond=0  #记录游戏时间，s
 gameTime = 0        #游戏总时间
