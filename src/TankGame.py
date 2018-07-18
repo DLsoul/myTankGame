@@ -371,7 +371,7 @@ def borderLimit(eneity):
 
 #=======================事件监听方法=====================
 def eventListener():
-    global pressedKey,gameMode,startPage   #按键信息
+    global pressedKey,gameMode,startPage,pause   #按键信息
     for event in pygame.event.get():
         if event.type == QUIT:
             exit()
@@ -384,6 +384,9 @@ def eventListener():
         if event.type == KEYDOWN:
             if event.key == K_SPACE:
                 player.fire()
+            if event.key == K_p:
+                pause=True
+                gamePause()
             # if event.key == K_k:
             #     surface.blit(afterStart, (0, 0))
             #     gameMode = True
@@ -419,13 +422,16 @@ def getList(Tlist,Tarray):
 
 #=========================初始化方法==========================
 def init():
-    global surface,clock,player,background,tank1,tank2,tank3,startPage,overImg
+    global surface,clock,player,background,tank1,tank2,tank3,startPage,pauseBackground,overImg
     surface = pygame.display.set_mode((surface_WIDTH, surface_HEIGHT), 0, 32)
     pygame.display.set_caption("坦克大战")
     background = pygame.image.load("../resources/img/background.png").convert()
     tank1 = pygame.image.load("../resources/img/tank_1.png").convert_alpha()
     tank2 = pygame.image.load("../resources/img/tank_2.png").convert_alpha()
     tank3 = pygame.image.load("../resources/img/tank_3.png").convert_alpha()
+    pauseBackground = pygame.image.load("../resources/img/pause.png").convert_alpha()
+    # beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
+    # afterStart = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
     # beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
     # afterStart = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
     overImg = pygame.image.load("../resources/img/fail.png").convert_alpha()
@@ -439,6 +445,22 @@ def init():
         sprite = pygame.image.load("../resources/img/wall_%d.png" % (i)).convert_alpha()
         wallSprite.append(sprite)
         i += 1
+
+
+#=========================游戏暂停======================
+def gamePause():
+    global pause
+    surface.blit(pauseBackground, (0, 0))
+    while pause:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                exit()
+            if event.type == KEYDOWN:
+                if event.key == K_p:
+                    pause=False
+        clock.tick(FPS)
+        pygame.display.update()
+
 
 #=========================随机地图======================
 def randomMap():
@@ -583,6 +605,9 @@ gameOverCount = 0 #
 # showGame()
 
 startGame()
+
+# showGame()
+pause=False
 
 while True:
     gameCount += 1
