@@ -421,6 +421,7 @@ def getList(Tlist,Tarray):
 def init():
     global surface,clock,player,background,tank1,tank2,tank3,startPage,overImg
     surface = pygame.display.set_mode((surface_WIDTH, surface_HEIGHT), 0, 32)
+    pygame.display.set_caption("坦克大战")
     background = pygame.image.load("../resources/img/background.png").convert()
     tank1 = pygame.image.load("../resources/img/tank_1.png").convert_alpha()
     tank2 = pygame.image.load("../resources/img/tank_2.png").convert_alpha()
@@ -616,9 +617,10 @@ while True:
         display()
     if isGameOver:
         # for i in range(1,180):
-        surface.blit(overImg, (215, 125))
+        # surface.blit(overImg, (215, 125))
+        surface.blit(overImg, (0, 0))
         gameOverCount += 1
-        if gameOverCount > 50:
+        if gameOverCount > 70:
             gameMode = False
             isGameOver = False
             gameOverCount = 0
