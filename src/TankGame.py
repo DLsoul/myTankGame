@@ -80,7 +80,7 @@ class Map(GameObject):
                 self.boom_index = len(self.boom_img) - 1
             self.sprite = self.boom_img[self.boom_index]
             #print(game_count)
-            if gameCount % 5 == 0:
+            if gameCount % 3 == 0:
                 self.boom_index += 1
 
     def __str__(self):
@@ -499,6 +499,9 @@ surface.blit(background,(0,0))
 #     print(mps)
 gameCount = 0
 while True:
+    gameCount += 1
+    if gameCount == 1000000:
+        gameCount = 0
     eventListener() #事件监听
     timePassed = clock.tick(FPS)  # 获取时间ms
     timePassedSecond = timePassed / 1000.0  # 时间转换为s
