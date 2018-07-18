@@ -263,20 +263,21 @@ class Enemy(GameObject):
         self.x = x
         self.y = y
         # self.direction=Vector2(0,-1)
-        self.direction = 1  # 坦克朝向 1上2右3下4左
+        self.direction = Vector2(0,-1)  # 向量表示坦克朝向
         self.needMove = False
         self.speed = 100
         self.life = 100
         self.patrolPath=[]
-        self.setPatrolPath([(self.x+120,self.y),(self.x+80,self.y-120),(self.x+120,self.y-120),(self.x,self.y-120),(self.x,self.y)])
+        #self.setPatrolPath([(self.x+120,self.y),(self.x+80,self.y-120),(self.x+120,self.y-120),(self.x,self.y-120),(self.x,self.y)])
         self.target=Vector2(self.x+80,self.y)  #目标点
         self.arriveDist=0.5         #判定到达距离
         self.speedDownDist=10       #开始减速距离
-        self.needToPatrol=True     #是否进行巡逻
+        self.needToPatrol=False     #是否进行巡逻
         self.pointCount=0           #巡逻点计数
         self.brain=StateMachine()   #大脑
         self.world=world            #敌人世界信息
         self.name=name              #敌人名称
+        self.standardPos = Vector2(self.x // 40, self.y // 40)  # 标准位置
 
     def hurt(self):
         pass
@@ -288,6 +289,7 @@ class Enemy(GameObject):
         pass
 
     def update(self):
+        pass
         # moveDir = Vector2(0, 0) #移动方向
         #
         # if self.direction==1:
@@ -303,14 +305,14 @@ class Enemy(GameObject):
         #
         # if self.needToPatrol:
         #     self.patrol()
-        self.brain.think()
-        if self.speed > 0. and self.location != self.destination:
-            vecToDestination = self.destination - self.location
-            distanceToDestination = vecToDestination.get_length()
-            heading = vecToDestination.get_normalized()
-            travelDistance = min(distanceToDestination, timePassedSecond * self.speed)
-            self.location += travelDistance * heading
-        borderLimit(self)
+        # self.brain.think()
+        # if self.speed > 0. and self.location != self.destination:
+        #     vecToDestination = self.destination - self.location
+        #     distanceToDestination = vecToDestination.get_length()
+        #     heading = vecToDestination.get_normalized()
+        #     travelDistance = min(distanceToDestination, timePassedSecond * self.speed)
+        #     self.location += travelDistance * heading
+        # borderLimit(self)
         # self.x += moveDir.x * self.speed * timePassedSecond
         # self.y += moveDir.y * self.speed * timePassedSecond
 
@@ -342,12 +344,19 @@ class Enemy(GameObject):
             self.patrolPath.append(p)
         self.needToPatrol=True
 
+#==================坦克2类======================
 class TankEnemy2(Enemy):
-    def __init__(self,world,image):
-        super().__init__(self,world,"Tank2",image)
-        self.life=25
-        self.speed=50.+ random.randint(-20,20)
-
+    def __init__(self,x,y,world,image):
+        super().__init__(x,y,world,"Tank2",image)
+        foolState = FoolState(self)
+        enemyPatrolState = EnemyPatrolState(self)
+        searchTargetState = SearchTargetState(self)
+        fleeState = FleeState(self)
+        self.brain.addState(foolState)
+        self.brain.addState(enemyPatrolState)
+        self.brain.addState(searchTargetState)
+        self.brain.addState(fleeState)
+        self.brain.setState("Fool")
 
     def hurt(self):
         pass
@@ -355,36 +364,10 @@ class TankEnemy2(Enemy):
     def fire(self):
         pass
 
-
-#=============开始菜单=============
-class StartPage(object):
-    def __init__(self):
-        self.beforeStart = []
-        for i in range(1,11):
-            self.beforeStart.append(pygame.image.load("../resources/img/beforeStart_"+str(i)+".jpg"))
-        # self.beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
-        self.afterStart = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
-
-    def isFocus(self):
-        point_x, point_y = pygame.mouse.get_pos()
-        if (220 < point_x < 380) and (293 < point_y < 333):
-            return True
-        else:
-            return False
-    def display(self):
-        if self.isFocus():
-            surface.blit(self.afterStart, (0, 0))
-        else:
-            if gameCount % 9 == 0:
-                num = gameCount % 10
-                surface.blit(self.beforeStart[num], (0, 0))
-
     def update(self):
-        if self.life<=0:
-            self.world.removeEntity(self)
-            return
-        Enemy.update()
+        self.brain.think()
 
+#==================状态基类===============
 class State(object):
     def __init__(self,name):
         self.name=name
@@ -392,6 +375,7 @@ class State(object):
     def update(self):
         pass
 
+    #考虑状态转换
     def checkConditions(self):
         pass
 
@@ -401,28 +385,33 @@ class State(object):
     def exitActions(self):
         pass
 
+#===================状态转换机==============
 class StateMachine(object):
     def __init__(self):
         self.states={}
         self.activeState=None
 
+    #添加状态列表
     def addState(self,state):
         self.states[state.name]=state
 
+    #考虑状态转换方向
     def think(self):
-        if self.activeState in None:
+        if self.activeState is None:
             return
         self.activeState.update()
         newStateName=self.activeState.checkConditions()
         if newStateName is not None:
             self.setState(newStateName)
 
+    #状态转换方法
     def setState(self,newStateName):
         if self.activeState is not None:
             self.activeState.exitActions()
         self.activeState=self.states[newStateName]
         self.activeState.entryActions()
 
+#=================敌人世界类=============================
 class EnemyWorld(object):
     def __init__(self):
         self.enemies={}
@@ -464,10 +453,60 @@ class EnemyWorld(object):
                     return enemy
         return None
 
+#=============傻逼状态======================
+class FoolState(State):
+    def __init__(self,tank):
+        State.__init__(self,"Fool")
+        self.tank=tank
+
+    def update(self):
+
+        if distanceTo(self.tank, self.tank.standardPos) < self.tank.arriveDist:
+            arrive(self.tank,self.tank.standardPos,self.tank.speedDownDist)
+        else:
+            if self.tryObstacle(self.tank.direction):
+                arrive(self.tank,self.tank.target,self.tank.speedDownDist)
+            else:
+                i=random.randint(1,3)
+                x,y=self.tank.direction
+                if i==1:        #[x*cos90-y*sin90,x*sin90+y*cos90]
+                    self.tank.direction.x=-y
+                    self.tank.direction.y=x
+                elif i==2:
+                    self.tank.direction.x = -x
+                    self.tank.direction.y = -y
+                elif i==3:
+                    self.tank.direction.x = y
+                    self.tank.direction.y = -x
+
+        # self.tank.
+
+    def checkConditions(self):
+        pass
+        # tank = self.tank.world.getCloseEnemy("tank2",self.tank.location)
+        # if tank is not None:
+
+    def entryActions(self):
+        pass
+
+    def tryObstacle(self,direction):
+        x=self.tank.x//40
+        y=self.tank.y//40
+        tar=Vector2(x,y)+direction*mapBlockLenth
+        block = self.findMapBlock(tar)
+        if block.type == 0:
+            self.tank.target=Vector2(block.x,block.y)
+            return True
+        return False
+
+    def findMapBlock(self,point):
+        return mapList[int(point.x//40+15*point.y//40)]
+
+
 #===========巡逻状态===================
 class EnemyPatrolState(State):
     def __init__(self,tank):
-        super().__init__(self,"Patrol")
+        State.__init__(self,"Patrol")
         self.tank=tank
 
     def randomDestination(self):
@@ -489,7 +528,7 @@ class EnemyPatrolState(State):
 #=====================索敌状态======================
 class SearchTargetState(State):
     def __init__(self, tank):
-        super().__init__(self, "Search")
+        State.__init__(self, "Search")
         self.tank = tank
 
     def update(self):
@@ -506,6 +545,55 @@ class SearchTargetState(State):
     def exitActions(self):
         super().exitActions()
 
+#==============逃跑状态========================
+class FleeState(State):
+    def __init__(self, tank):
+        State.__init__(self, "Flee")
+        self.tank = tank
+
+    def update(self):
+        pass
+
+    def checkConditions(self):
+        pass
+
+    def entryActions(self):
+        pass
+
+    def exitActions(self):
+        pass
+
+
+#=============开始菜单=============
+class StartPage(object):
+    def __init__(self):
+        self.beforeStart = []
+        for i in range(1,11):
+            self.beforeStart.append(pygame.image.load("../resources/img/beforeStart_"+str(i)+".jpg"))
+        # self.beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
+        self.afterStart = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
+
+    def isFocus(self):
+        point_x, point_y = pygame.mouse.get_pos()
+        if (220 < point_x < 380) and (293 < point_y < 333):
+            return True
+        else:
+            return False
+    def display(self):
+        if self.isFocus():
+            surface.blit(self.afterStart, (0, 0))
+        else:
+            if gameCount % 9 == 0:
+                num = gameCount % 10
+                surface.blit(self.beforeStart[num], (0, 0))
+
+    def update(self):
+        if self.life<=0:
+            self.world.removeEntity(self)
+            return
+        Enemy.update()
+
+#===================A*寻路===============
 def findPath(source,target):
     pointPath=[]
     #to do
@@ -609,7 +697,7 @@ def getList(Tlist,Tarray):
 
 #=========================初始化方法==========================
 def init():
-    global enemyTank,surface,clock,player,background,tank1,tank2,tank3,startPage
+    global enemyTank,enemyWorld,surface,clock,player,background,tank1,tank2,tank3,startPage
 
     surface = pygame.display.set_mode((surface_WIDTH, surface_HEIGHT), 0, 32)
     background = pygame.image.load("../resources/img/background.png").convert()
@@ -620,7 +708,8 @@ def init():
     # afterStart = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
     clock = pygame.time.Clock()
     player = Player(320, 240)
-    #enemyTank.append(Enemy(400,280))
+    enemyWorld=EnemyWorld()
+    enemyTank.append(TankEnemy2(400,280,enemyWorld,"tank_2"))
     startPage = StartPage()
 
     i = 1
@@ -728,6 +817,7 @@ surface_HEIGHT=400  #屏幕高度
 
 playerBullets = [] #玩家子弹
 enemyTank=[]
+enemyWorld=None
 
 FPS=60          #最大帧数
 mapBlockLenth=40 #地图块大小
