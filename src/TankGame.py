@@ -45,6 +45,18 @@ class Map(GameObject):
         self.sprite=wallSprite[type-1]
         self.type=type
         self.width,self.height=self.sprite.get_size()
+        self.boom_index = 0
+        self.boom_img = []
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_11.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_12.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_13.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_14.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_15.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_16.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_17.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_18.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_19.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_20.png"))
 
     #用于检测在此方块上的碰撞
     def isCrash(self,other):
@@ -61,7 +73,15 @@ class Map(GameObject):
         surface.blit(self.sprite,(self.x,self.y))
 
     def update(self):
-        pass
+        if self.isAlive == False:
+            if self.boom_index >= len(self.boom_img):
+                mapList.remove(self)
+                self.isAlive = False
+                self.boom_index = len(self.boom_img) - 1
+            self.sprite = self.boom_img[self.boom_index]
+            #print(game_count)
+            if gameCount % 5 == 0:
+                self.boom_index += 1
 
     def __str__(self):
         return "坐标(%d,%d),地图%d"%(self.x,self.y,self.type)
@@ -190,6 +210,14 @@ class Bullet(GameObject):
             self.ySpeed = 0
             self.x = x - self.width
             self.y = y + height/2 -self.height/2
+
+    def isCrash(self,other):
+        if self.x < other.x + other.width-15 \
+                and self.x + self.width > other.x +15 \
+                and self.y < other.y + other.height-15  \
+                and self.y + self.height > other.y+15 :
+            return True
+        return False
 
     def update(self):
         self.x += self.xSpeed
@@ -363,6 +391,7 @@ def update():
     crash()
     player.update()
     bulletsUpdate()
+    blocksUpdate()
 
 #========================显示 绘制 方法========================
 def display():
@@ -384,6 +413,7 @@ def bulletsUpdate():
 
 def crash():
     playerCrashBlock()
+    playerBulletCrashBlock()
 
 
 
@@ -398,6 +428,26 @@ def playerCrashBlock():
                 player.y = blk.y - 40
             elif player.isCrash(blk) == 4:
                 player.x = blk.x + 40
+
+def playerBulletCrashBlock():
+    for p_b in playerBullets:
+        for blk in mapList:
+            if blk.type:
+                if p_b.isCrash(blk):
+                    blk.isAlive = False
+                    p_b.isAlive = False
+
+def blocksUpdate():
+
+    for blk in mapList:
+        if blk.type:
+            #print(blk.isAlive)
+            #if not blk.isAlive:
+                #mapList.remove(blk)
+            #need_remove.append(blk)
+            blk.update()
+    # for blk in need_remove:
+    #     mapList.remove(blk)
 
 surface = None
 clock = None
@@ -447,7 +497,7 @@ surface.blit(background,(0,0))
 # for mps in mapList:
 #     mps.display(surface)
 #     print(mps)
-
+gameCount = 0
 while True:
     eventListener() #事件监听
     timePassed = clock.tick(FPS)  # 获取时间ms
