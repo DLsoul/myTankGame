@@ -103,7 +103,7 @@ class Map(GameObject):
                 self.boom_index = len(self.boom_img) - 1
             self.sprite = self.boom_img[self.boom_index]
             #print(game_count)
-            if gameCount % 3 == 0:
+            if gameCount % 6 == 0:
                 self.boom_index += 1
 
     def __str__(self):
@@ -121,15 +121,20 @@ class Player(GameObject):
         self.needMove=False
         self.speed=100
         self.life=5
+        self.superBulletNum=2
         self.lifeFrame = pygame.image.load("../resources/img/blood.png")    #血条
 
     def fire(self):
-        bullet = Bullet(self.x,self.y,self.width,self.height,self.direction)
-        playerBullets.append(bullet)
+        if len(playerBullets) < 2:
+            bullet = Bullet(self.x,self.y,self.width,self.height,self.direction)
+            playerBullets.append(bullet)
+
 
     def fire1(self):
-        superBullet = SuperBullet(self.x, self.y, self.width, self.height, self.direction)
-        playerSuperBullets.append(superBullet)
+        if self.superBulletNum>0:
+            self.superBulletNum -= 1
+            superBullet = SuperBullet(self.x, self.y, self.width, self.height, self.direction)
+            playerSuperBullets.append(superBullet)
 
     def hurt(self,bullet):
         global isGameOver
@@ -213,6 +218,72 @@ class Player(GameObject):
                               1140 * self.life / 140, 5))
             surface.blit(self.sprite,(self.x,self.y))
 
+
+
+#==========================炮台============================
+class Battery(GameObject):
+    def __init__(self,x,y):
+        super().__init__()
+        self.direction = 1
+        self.isAlive=True
+        self.life=20
+        self.sprite=pygame.image.load("../resources/img/炮台.png")   #装载炮台图片
+        self.x=x
+        self.y=y
+        self.lifeFrame = pygame.image.load("../resources/img/blood.png")  # 血条
+        self.boom_index = 0
+        self.boom_img = []
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_11.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_12.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_13.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_14.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_15.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_16.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_17.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_18.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_19.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/bomb_20.png"))
+        surface.blit(self.lifeFrame, (self.x, self.y - 5))
+    def update(self):
+        if self.isAlive:
+            pass
+        else:
+            if self.boom_index >= len(self.boom_img):
+
+                self.isAlive = False
+                bat.remove(self)
+                # 遊戲勝利
+                self.boom_index = len(self.boom_img) - 1
+            self.sprite = self.boom_img[self.boom_index]
+            # print(game_count)
+            if gameCount % 6 == 0:
+                self.boom_index += 1
+        #self.bat = pygame.image.load("../resources/img/tank_1.png")
+    def display(self):
+        if self.life > 0:
+            pygame.draw.rect(surface, (255, 0, 0),
+                             (self.x - self.width + 39.8, self.y - self.height + 35,
+                              285 * self.life / 140, 5))
+        surface.blit(self.sprite, (self.x, self.y))
+    def fire(self):
+        batteryDir=Vector2(player.x-self.x,player.y-self.y)
+
+        missile = Missile(self.x, self.y, self.width, self.height, self.direction,batteryDir)
+        batBullets.append(missile)
+        # for missile in batBullets:
+        #
+        #     missile.update()
+    def hurt(self,other):
+        self.life-=other.damage
+        if self.life<=0:
+            self.isAlive=False
+
+class SupPackage(GameObject):
+    def __init__(self):
+        pass
+
+
+
 class Bullet(GameObject):
     def __init__(self,x,y,width,height,direction):
         super().__init__()
@@ -262,6 +333,31 @@ class Bullet(GameObject):
     def display(self):
         surface.blit(self.sprite,(self.x, self.y))
 
+#=========================导弹类=====================
+class Missile(Bullet):
+    def __init__(self, x, y, width, height, direction,battaryDir):
+        self.direction = direction
+        self.isAlive = True
+        self.damage = 2
+        self.width=40
+        self.height=40
+        self.xSpeed = 3
+        self.ySpeed = 3
+        self.speed=40
+        self.x = x + width / 2 - self.width / 2
+        self.y = y - self.height + 25
+        self.mis = pygame.image.load("../resources/img/blue.png")
+        self.flyDir=battaryDir.normalise()
+    def update(self):
+        self.x += self.flyDir.x*self.xSpeed
+        self.y += self.flyDir.y*self.ySpeed
+
+        if self.x > surface_WIDTH or self.x + self.width < 0 or \
+                self.y > surface_HEIGHT or self.y + surface_HEIGHT < 0:
+            self.isAlive = False
+    def display(self):
+        surface.blit(self.mis, (self.x, self.y))
+
 #========================敌人类=====================
 class Enemy(GameObject):
     def __init__(self,x,y):
@@ -286,6 +382,9 @@ class Enemy(GameObject):
     def hurt(self,bullet):
         self.life -= bullet.damage
         if self.life <= 0:
+            #to do socre
+            global score
+            score+=10
             self.isAlive = False
 
     def fire(self):
@@ -354,11 +453,22 @@ class Enemy(GameObject):
             #     self.y=0
             #     self.needMove=False
             moveDir.normalise()     #向量规格化
-            if self.moveAble:
-                self.x += moveDir.x * self.speed * timePassedSecond
-                self.y += moveDir.y * self.speed * timePassedSecond
-            else:
-                self.moveAble = True
+            # if self.moveAble:
+            self.x += moveDir.x * self.speed * timePassedSecond
+            self.y += moveDir.y * self.speed * timePassedSecond
+            if self.moveAble==False:
+                if gameCount%30 ==0:
+                    self.moveAble=True
+                    self.speed=50
+
+
+            # else:
+            #     moveDir.x = -moveDir.x
+            #     moveDir.y = -moveDir.y
+            #     self.x += moveDir.x * self.speed * timePassedSecond
+            #     self.y += moveDir.y * self.speed * timePassedSecond
+            #     # if gameCount%40==0:
+            #     self.moveAble = True
 
             borderLimit(self)
         else:
@@ -368,7 +478,7 @@ class Enemy(GameObject):
                 self.boom_index = len(self.boom_img) - 1
             self.sprite = self.boom_img[self.boom_index]
             # print(game_count)
-            if gameCount % 3 == 0:
+            if gameCount % 6 == 0:
                 self.boom_index += 1
 
     def display(self):
@@ -381,7 +491,12 @@ class Enemy(GameObject):
 
     def isCrash(self,other):
         if super().isCrash(other,True) and other.isAlive:
-            self.moveAble = False
+        # if super().isCrash(other, False) and other.isAlive:
+            if other==player:
+                self.speed=0
+                self.moveAble = False
+            # self.speed = -self.speed
+
             return self.direction
         return 0
 
@@ -390,6 +505,17 @@ class SuperBullet(Bullet):
         super().__init__(x,y,width,height,direction)
         self.damage = 1
         self.setImage("../resources/img/superBullet.png")
+        self.boom_index = 0
+        self.boom_img = []
+        self.boom_img.append(pygame.image.load("../resources/img/superBullet_1.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/superBullet_2.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/superBullet_3.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/superBullet_4.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/superBullet_5.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/superBullet_6.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/superBullet_7.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/superBullet_8.png"))
+        self.boom_img.append(pygame.image.load("../resources/img/superBullet_9.png"))
         if (direction == 1):
             # self.setImage("../resources/img/super_bullet_1.png")
             # self.sprite = pygame.transform.rotate(self.sprite, 90.)
@@ -424,40 +550,53 @@ class SuperBullet(Bullet):
             self.y = y + height / 2 - self.height / 2
 
     def update(self):
-        if (self.direction == 1) and self.isAlive:
-            self.xSpeed+=self.g*timePassedSecond
-            self.x+=self.xSpeed*timePassedSecond
-            self.y+=self.ySpeed*timePassedSecond
-            if self.x > surface_WIDTH or self.x + self.width < 0 or \
-                self.y > surface_HEIGHT or self.y + surface_HEIGHT < 0 or \
-                    self.xSpeed>=100:
-                self.isAlive = False
-        if (self.direction == 2) and self.isAlive:
-            self.ySpeed += self.g * timePassedSecond
-            self.x += self.xSpeed * timePassedSecond
-            self.y += self.ySpeed * timePassedSecond
-            if self.x > surface_WIDTH or self.x + self.width < 0 or \
+        if self.isAlive:
+            if (self.direction == 1):
+                self.xSpeed+=self.g*timePassedSecond
+                self.x+=self.xSpeed*timePassedSecond
+                self.y+=self.ySpeed*timePassedSecond
+                if self.x > surface_WIDTH or self.x + self.width < 0 or \
                     self.y > surface_HEIGHT or self.y + surface_HEIGHT < 0 or \
-                    self.ySpeed >= 100:
-                self.isAlive = False
-        if (self.direction == 3) and self.isAlive:
-            self.xSpeed+=self.g*timePassedSecond
-            self.x+=self.xSpeed*timePassedSecond
-            self.y+=self.ySpeed*timePassedSecond
-            if self.x > surface_WIDTH or self.x + self.width < 0 or \
-                self.y > surface_HEIGHT or self.y + surface_HEIGHT < 0 or \
-                    self.xSpeed<=-100:
-                self.isAlive = False
-        if (self.direction == 4) and self.isAlive:
-            self.ySpeed += self.g * timePassedSecond
-            self.x += self.xSpeed * timePassedSecond
-            self.y += self.ySpeed * timePassedSecond
-            if self.x > surface_WIDTH or self.x + self.width < 0 or \
+                        self.xSpeed>=100:
+                    self.isAlive = False
+            if (self.direction == 2):
+                self.ySpeed += self.g * timePassedSecond
+                self.x += self.xSpeed * timePassedSecond
+                self.y += self.ySpeed * timePassedSecond
+                if self.x > surface_WIDTH or self.x + self.width < 0 or \
+                        self.y > surface_HEIGHT or self.y + surface_HEIGHT < 0 or \
+                        self.ySpeed >= 100:
+                    self.isAlive = False
+            if (self.direction == 3):
+                self.xSpeed+=self.g*timePassedSecond
+                self.x+=self.xSpeed*timePassedSecond
+                self.y+=self.ySpeed*timePassedSecond
+                if self.x > surface_WIDTH or self.x + self.width < 0 or \
                     self.y > surface_HEIGHT or self.y + surface_HEIGHT < 0 or \
-                    self.ySpeed >= 100:
+                        self.xSpeed<=-100:
+                    self.isAlive = False
+            if (self.direction == 4):
+                self.ySpeed += self.g * timePassedSecond
+                self.x += self.xSpeed * timePassedSecond
+                self.y += self.ySpeed * timePassedSecond
+                if self.x > surface_WIDTH or self.x + self.width < 0 or \
+                        self.y > surface_HEIGHT or self.y + surface_HEIGHT < 0 or \
+                        self.ySpeed >= 100:
+                    self.isAlive = False
+        else:
+            if self.boom_index >= len(self.boom_img):
+                playerSuperBullets.remove(self)
                 self.isAlive = False
+                self.boom_index = len(self.boom_img) - 1
+            self.sprite = self.boom_img[self.boom_index]
+            # print(game_count)
+            if gameCount % 6 == 0:
+                self.boom_index += 1
     def display(self):
-        surface.blit(self.sprite,(self.x, self.y))
+        if self.isAlive:
+            surface.blit(self.sprite,(self.x, self.y))
+        else:
+            surface.blit(self.sprite, (self.x-20, self.y-20))
 # =====================白云类=============================
 class Cloud(GameObject):
     def __init__(self):
@@ -628,11 +767,13 @@ def getList(Tlist,Tarray):
             j+=1
         j=0
         i+=1
-
 #=========================初始化方法==========================
 def init():
-    global surface,clock,player,background,tank1,tank2,tank3,startPage,pauseBackground,overImg,enemies
+    global surface,clock,player,background,tank1,tank2,tank3,startPage,pauseBackground,overImg,enemies,myfont   #,textSurface,fenshu
     surface = pygame.display.set_mode((surface_WIDTH, surface_HEIGHT), 0, 32)
+    myfont=pygame.font.SysFont("BrushScriptStd.ttf",36)#字体设置
+    # textSurface=myfont.render("分数：%d"%fenshu,True,(255,255,255))
+    # fenshu=0
     pygame.display.set_caption("坦克大战")
     background = pygame.image.load("../resources/img/background.png").convert()
     tank1 = pygame.image.load("../resources/img/tank_1.png").convert_alpha()
@@ -646,6 +787,7 @@ def init():
     overImg = pygame.image.load("../resources/img/fail.png").convert_alpha()
     clock = pygame.time.Clock()
     player = Player(320, 240)
+    bat.append(Battery(560, 180))
     # enemy = Enemy(400,300)
     startPage = StartPage()
 
@@ -705,6 +847,12 @@ def update():
     bulletsUpdate()
     superBulletsUpdate()
     blocksUpdate()
+    for b in bat:
+        b.update()
+    missileUpdate()
+    for b in bat:
+        missileLaunch(player, b)
+    # textSurface = myfont.render("score:%d" % fenshu, True, (255, 255, 255))
 
 #========================显示 绘制 方法========================
 def display():
@@ -717,6 +865,10 @@ def display():
             bullet.display()
     for bullet in playerSuperBullets:
         bullet.display()
+    for missile in batBullets:
+        missile.display()
+    for b in bat:
+        b.display()
     for bullet in enemyBullets:
         bullet.display()
     for enemy in enemies:
@@ -725,6 +877,8 @@ def display():
         cld1.display()
     for cld in clouds:
          cld.display()
+
+    surface.blit(myfont.render("score:%d" % score, True, (255, 255, 255)),(0,0))
 
 def bulletsUpdate():
     needRemove = []
@@ -741,8 +895,17 @@ def bulletsUpdate():
         playerBullets.remove(bullet)
     for bullet in removeNeed:
         enemyBullets.remove(bullet)
+def missileUpdate():
+    need_remove=[]
+    for missile in batBullets:
+        if not missile.isAlive:
+            need_remove.append(missile)
+        missile.update()
+    for missile in need_remove:
+        batBullets.remove(missile)
 
 def superBulletsUpdate():
+    global score
     needRemove = []
     for bullet in playerSuperBullets:
         if not bullet.isAlive:
@@ -750,14 +913,15 @@ def superBulletsUpdate():
         bullet.update()
     for bullet in needRemove:
         for blk in mapList:
-            if blk.x<=bullet.x+40 and blk.x>=bullet.x-40 \
-                and blk.y<=bullet.y+40 and blk.y>=bullet.y-40:
+            if blk.x<=bullet.x+60 and blk.x>=bullet.x-60 \
+                and blk.y<=bullet.y+60 and blk.y>=bullet.y-60:
                 blk.isAlive=False
         for enemy in enemies:
-            if enemy.x<=bullet.x+40 and enemy.x>=bullet.x-40 \
-                and enemy.y<=bullet.y+40 and enemy.y>=bullet.y-40:
+            if enemy.x<=bullet.x+60 and enemy.x>=bullet.x-60 \
+                and enemy.y<=bullet.y+60 and enemy.y>=bullet.y-60:
+                score +=10
                 enemy.isAlive=False
-        playerSuperBullets.remove(bullet)
+        # playerSuperBullets.remove(bullet)
 
 def crash():
     if not isGameOver:
@@ -767,12 +931,28 @@ def crash():
         enemyBulletCrash()
         playerCrashEnemy()
         EnemyCrashEnemy()
+        MisCrashPlayer()
 
+
+def MisCrashPlayer():
+    for b in batBullets:
+        if b.isCrash(player):
+            player.hurt(b)
+            b.isAlive=False
 
 def playerCrashBlock():
     for blk in mapList:
         if blk.type:
             player.isCrash(blk)
+
+def missileLaunch(player,bat): #导弹发射策略
+    dis_x=bat.x-player.x
+    dis_y=bat.y-player.y
+    dis_s=math.sqrt(dis_x**2+dis_y**2)
+    if dis_s<700:
+         if gameCount%300==0:
+            bat.fire()
+            print("炮台开火")
 
 def playerCrashEnemy():
     for enemy in enemies:
@@ -802,6 +982,14 @@ def playerBulletCrash():
             if p_b.isCrash(enemy) and p_b.isAlive and enemy.isAlive:
                 enemy.hurt(p_b)
                 p_b.isAlive = False
+        for p_b in playerBullets:
+            for b in bat:
+                if p_b.x < b.x + b.width \
+                        and p_b.x + p_b.width > b.x \
+                        and p_b.y < b.y + b.height \
+                        and p_b.y + p_b.height > b.y and p_b.isAlive and b.isAlive:
+                    b.hurt(p_b)
+                    p_b.isAlive = False
 
 
 def enemyBulletCrash():
@@ -821,12 +1009,14 @@ def enemyBulletCrash():
 #         surface.blit(beforeStart, (0, 0))
 # 真正的初始化
 def startGame():
-    global gameCount,mapList,randomDir,mapArrayIndex
+    global gameCount,mapList,randomDir,mapArrayIndex,score
+    score = 0
+    init()
     randomDir = random.randint(1, 4)
     mapArrayIndex = randomMap()
     mapArrayIndex[6][8] = 0
     mapList = []  # 地图表，存储障碍物精灵图片
-    init()  # 初始化
+    # init()  # 初始化
     getList(mapList, mapArrayIndex)  # 根据障碍物位置信息填写地图表
     gameCount = 0
 
@@ -886,8 +1076,13 @@ gameMode = False #标志位，判断是游戏开始界面还是游戏界面
 surface = None
 clock = None
 background=None
+myfont=None
+textSurface=None
+# fenshu=0
 clouds=[]
 clouds1=[]
+bat=[]
+batBullets=[]  #炮塔子弹
 cloud_time = random.randint(1, 6) * 35
 tank1=None
 tank2=None
@@ -951,7 +1146,7 @@ pause=False
 
 while True:
     while (len(enemies) < 3):
-        enemy = Enemy(random.randint(1,14)*40,random.randint(1,9)*40)
+        enemy = Enemy(random.randint(10,14)*40,random.randint(4,6)*40)
         mapArrayIndex[enemy.y//40][enemy.x//40] = 0
         enemies.append(enemy)
 
@@ -978,7 +1173,6 @@ while True:
     # for mps in mapList:
     #     mps.drawWall(surface)
     #     print(mp)
-
 
     if(gameMode == False):
         startPage.display()
