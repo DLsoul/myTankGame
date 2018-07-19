@@ -269,7 +269,8 @@ class Enemy(GameObject):
         self.x = x
         self.y = y
         # self.direction=Vector2(0,-1)
-        self.direction = Vector2(0,-1)  # 向量表示坦克朝向
+        self.direction = 1  # 向量表示坦克朝向
+        # self.dir =1 #备用方向
         self.needMove = False
         self.speed = 100
         self.life = 100
@@ -341,6 +342,9 @@ class Enemy(GameObject):
     def setTarget(self,tar):
         self.target=tar
 
+    def isCrash(self,other,re_flag):
+        super().isCrash(other,re_flag)
+
     def setPatrolPath(self,points):
         # p1=Vector2(points[0][0],points[0][1])
         # p2 = Vector2(points[1][0], points[1][1])
@@ -354,6 +358,7 @@ class Enemy(GameObject):
 class TankEnemy2(Enemy):
     def __init__(self,x,y,world,image):
         super().__init__(x,y,world,"Tank2",image)
+        self.randomDir=0
         foolState = FoolState(self)
         enemyPatrolState = EnemyPatrolState(self)
         searchTargetState = SearchTargetState(self)
@@ -372,6 +377,17 @@ class TankEnemy2(Enemy):
 
     def update(self):
         self.brain.think()
+
+    def isCrash(self,other,re_flag):
+        if super().isCrash(other,True) and other.isAlive:
+        # if super().isCrash(other, False) and other.isAlive:
+            if other==player:
+                self.speed=0
+                self.moveAble = False
+            # self.speed = -self.speed
+
+            return self.direction
+        return 0
 
 #==================状态基类===============
 class State(object):
@@ -466,27 +482,89 @@ class FoolState(State):
         self.tank=tank
 
     def update(self):
-        # print(self.tank.standardPos)
-        if distanceTo(self.tank, self.tank.standardPos) < self.tank.arriveDist:
-            print("位置规格化")
-            arrive(self.tank,self.tank.standardPos,self.tank.speedDownDist)
+        global enemies
+        if self.tank.isAlive:
+            moveDir = Vector2(0, 0)  # 移动方向
+            # randomDir = random.randint(1, 4)
+            # randomDir = 1
+            if gameCount % 30 == 0:
+                self.tank.fire()
+            if gameCount % 30 == 0:
+                self.tank.randomDir = random.randint(1, 4)
+            if self.tank.randomDir == 4:
+                moveDir.x = -1
+                if self.tank.direction == 1:
+                    self.tank.sprite = pygame.transform.rotate(self.tank.sprite, 90.)
+                elif self.tank.direction == 2:
+                    self.tank.sprite = pygame.transform.rotate(self.tank.sprite, 180.)
+                elif self.tank.direction == 3:
+                    self.tank.sprite = pygame.transform.rotate(self.tank.sprite, -90.)
+
+                self.tank.direction = 4
+                self.tank.needMove = True
+            elif self.tank.randomDir == 2:
+                moveDir.x = 1
+                if self.tank.direction == 1:
+                    self.tank.sprite = pygame.transform.rotate(self.tank.sprite, -90.)
+                elif self.tank.direction == 3:
+                    self.tank.sprite = pygame.transform.rotate(self.tank.sprite, 90.)
+                elif self.tank.direction == 4:
+                    self.tank.sprite = pygame.transform.rotate(self.tank.sprite, 180.)
+                self.tank.direction = 2
+                self.tank.needMove = True
+            elif self.tank.randomDir == 1:
+                moveDir.y = -1
+                if self.tank.direction == 4:
+                    self.tank.sprite = pygame.transform.rotate(self.tank.sprite, -90.)
+                elif self.tank.direction == 2:
+                    self.tank.sprite = pygame.transform.rotate(self.tank.sprite, 90.)
+                elif self.tank.direction == 3:
+                    self.tank.sprite = pygame.transform.rotate(self.tank.sprite, 180.)
+
+                self.tank.direction = 1
+                self.tank.needMove = True
+            elif self.tank.randomDir == 3:
+                moveDir.y = 1
+                if self.tank.direction == 1:
+                    self.tank.sprite = pygame.transform.rotate(self.tank.sprite, 180.)
+                elif self.tank.direction == 2:
+                    self.tank.sprite = pygame.transform.rotate(self.tank.sprite, -90.)
+                elif self.tank.direction == 4:
+                    self.tank.sprite = pygame.transform.rotate(self.tank.sprite, 90.)
+
+                self.tank.direction = 3
+                self.tank.needMove = True
+            # else:
+            #     self.x=0
+            #     self.y=0
+            #     self.needMove=False
+            moveDir.normalise()  # 向量规格化
+            # if self.moveAble:
+            self.tank.x += moveDir.x * self.tank.speed * timePassedSecond
+            self.tank.y += moveDir.y * self.tank.speed * timePassedSecond
+            if self.tank.needMove == False:
+                if gameCount % 30 == 0:
+                    self.tank.needMove = True
+                    self.tank.speed = 50
+
+            # else:
+            #     moveDir.x = -moveDir.x
+            #     moveDir.y = -moveDir.y
+            #     self.x += moveDir.x * self.speed * timePassedSecond
+            #     self.y += moveDir.y * self.speed * timePassedSecond
+            #     # if gameCount%40==0:
+            #     self.moveAble = True
+
+            borderLimit(self.tank)
         else:
-            if self.tryObstacle(self.tank.direction):
-                arrive(self.tank,self.tank.target,self.tank.speedDownDist)
-            else:
-                i=random.randint(1,3)
-                print("(randomint):%d"%i)
-                x,y=self.tank.direction
-                print("原來direction坐標(x,y):%d,%d"%(x,y))
-                if i==1:        #[x*cos90-y*sin90,x*sin90+y*cos90]
-                    self.tank.direction.x=-y
-                    self.tank.direction.y=x
-                elif i==2:
-                    self.tank.direction.x = -x
-                    self.tank.direction.y = -y
-                elif i==3:
-                    self.tank.direction.x = y
-                    self.tank.direction.y = -x
+            if self.tank.boom_index >= len(self.tank.boom_img):
+                enemies.remove(self.tank)
+                self.tank.isAlive = False
+                self.tank.boom_index = len(self.tank.boom_img) - 1
+            self.tank.sprite = self.tank.boom_img[self.tank.boom_index]
+            # print(game_count)
+            if gameCount % 6 == 0:
+                self.tank.boom_index += 1
 
     def checkConditions(self):
         pass
@@ -521,8 +599,8 @@ class EnemyPatrolState(State):
         State.__init__(self,"Patrol")
         self.tank=tank
 
-    def randomDestination(self):
-        self.tank.destination=Vector2(random.randint(0,14)*mapBlockLenth,random.randint(0,9)*mapBlockLenth)
+    # def randomDestination(self):
+    #     self.tank.destination=Vector2(random.randint(0,14)*mapBlockLenth,random.randint(0,9)*mapBlockLenth)
 
     def update(self):
         if random.randint(1,20)==1:
@@ -604,6 +682,8 @@ class StartPage(object):
             self.world.removeEntity(self)
             return
         Enemy.update()
+
+
 
 #===================A*寻路===============
 def findPath(source,target):
@@ -812,6 +892,7 @@ def crash():
     if not isGameOver:
         playerCrashBlock()
         playerBulletCrashBlock()
+        enemyCrashBlock()
 
 
 def playerCrashBlock():
@@ -826,6 +907,12 @@ def playerBulletCrashBlock():
                 if p_b.isCrash(blk) and p_b.isAlive and blk.isAlive:
                     blk.hurt(p_b)
                     p_b.isAlive = False
+
+def enemyCrashBlock():
+    for tank in enemyTank:
+        for blk in mapList:
+            if blk.type:
+                tank.isCrash(blk,True)
 # 开始游戏界面
 # def showGame():
 #     if(gameMode == False):
