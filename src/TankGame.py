@@ -1330,6 +1330,7 @@ while True:
         enemies.clear()
         hpPackages.clear()
         superBulletPackages.clear()
+        superBulletNum = 2
         # for i in range(1,180):
         # surface.blit(overImg, (215, 125))
         gameMode = True
