@@ -844,7 +844,7 @@ def getList(Tlist,Tarray):
 def init():
     global surface,clock,player,background,tank1,tank2,tank3,startPage,winPage,pauseBackground,overImg,enemies,myfont ,winImg  #,textSurface,fenshu
     surface = pygame.display.set_mode((surface_WIDTH, surface_HEIGHT), 0, 32)
-    myfont=pygame.font.SysFont("BrushScriptStd.ttf",36)#字体设置
+    myfont=pygame.font.SysFont("../resources/font/consola.ttf",28)#字体设置
     # textSurface=myfont.render("分数：%d"%fenshu,True,(255,255,255))
     # fenshu=0
     pygame.display.set_caption("坦克大战")
@@ -1035,11 +1035,11 @@ def missileLaunch(player,bat): #导弹发射策略
     if dis_s<700:
          if gameCount%300==0:
             bat.fire()
-            print("炮台开火")
+            # print("炮台开火")
 
 def playerCrashEnemy():
     for enemy in enemies:
-        player.isCrash(enemy)
+        # player.isCrash(enemy)
         enemy.isCrash(player)
 
 def EnemyCrashEnemy():
@@ -1152,7 +1152,7 @@ def cloud_update():
     for cld1 in clouds1:
         if not cld1.isAlive:
             need_remove1.append(cld1)
-        if clouds1.index(cld1)<len(clouds1)-1:
+        if clouds1.index(cld1)<len(clouds1):
             cld1.update1(clouds[clouds1.index(cld1)])
         else:
             cld1.update1(clouds[clouds1.index(cld1)-1])
