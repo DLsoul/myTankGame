@@ -144,10 +144,11 @@ class Player(GameObject):
 
     def hurt(self,bullet):
         global isGameOver
-        self.life -= bullet.damage
-        if self.life <= 0:
-            self.isAlive = False
-            isGameOver = True
+        if gameCount>=120:
+            self.life -= bullet.damage
+            if self.life <= 0:
+                self.isAlive = False
+                isGameOver = True
 
     def move(self):
         pass
@@ -218,11 +219,14 @@ class Player(GameObject):
 
     def display(self):
         if self.life > 0:
-            surface.blit(self.lifeFrame, (self.x, self.y - 5))
-            pygame.draw.rect(surface, (253, 240, 1),
-                             (self.x - self.width + 39.8, self.y - self.height + 35,
-                              1140 * self.life / 140, 5))
-            surface.blit(self.sprite,(self.x,self.y))
+            if gameCount<=120 and gameCount%10>=5:
+                pass
+            else:
+                surface.blit(self.lifeFrame, (self.x, self.y - 5))
+                pygame.draw.rect(surface, (253, 240, 1),
+                                 (self.x - self.width + 39.8, self.y - self.height + 35,
+                                  1140 * self.life / 140, 5))
+                surface.blit(self.sprite,(self.x,self.y))
 
 
 
