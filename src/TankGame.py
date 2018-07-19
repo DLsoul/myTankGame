@@ -727,8 +727,8 @@ class WinPage(object):
         # for i in range(1,11):
         #     self.beforeStart.append(pygame.image.load("../resources/img/beforeStart_"+str(i)+".jpg"))
         # self.beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
-        self.beforeContinue = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
-        self.afterContinue = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
+        self.beforeContinue = pygame.image.load("../resources/img/test.jpg").convert_alpha()
+        self.afterContinue = pygame.image.load("../resources/img/test.jpg").convert_alpha()
 
     def isFocus(self):
         point_x, point_y = pygame.mouse.get_pos()
@@ -1225,6 +1225,7 @@ winTheGame=False
 mapList = None #地图表
 gameOverCount = 0 #
 mapArrayIndex = None
+firstStage=True
 #障碍物位置信息  15*10
 # mapArrayIndex=[
 #     [0,1,0,0,0,4,0,2,0,0,0,3,2,0,0,0],
@@ -1252,7 +1253,7 @@ mapArrayIndex = None
 # showGame()
 
 startGame()
-
+delay=0
 # showGame()
 pause=False
 
@@ -1289,9 +1290,17 @@ while True:
 
     if(gameMode == False):
         if winTheGame:
-            winPage.display()
-        else:
+            delay+=1
+            if delay<=120:
+                winPage.display()
+            else:
+                winTheGame = False
+                gameMode = True
+                delay=0
+                startGame()
+        elif firstStage==True:
             startPage.display()
+
     else:
         update()
         display()
