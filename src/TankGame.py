@@ -725,26 +725,26 @@ class StartPage(object):
                 surface.blit(self.beforeStart[num], (0, 0))
 
 #=============胜利界面=============
-class WinPage(object):
-    def __init__(self):
-        # self.beforeStart = []
-        # for i in range(1,11):
-        #     self.beforeStart.append(pygame.image.load("../resources/img/beforeStart_"+str(i)+".jpg"))
-        # self.beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
-        self.beforeContinue = pygame.image.load("../resources/img/test.jpg").convert_alpha()
-        self.afterContinue = pygame.image.load("../resources/img/test.jpg").convert_alpha()
-
-    def isFocus(self):
-        point_x, point_y = pygame.mouse.get_pos()
-        if (220 < point_x < 380) and (293 < point_y < 333):
-            return True
-        else:
-            return False
-    def display(self):
-        if self.isFocus():
-            surface.blit(self.afterContinue, (0, 0))
-        else:
-            surface.blit(self.beforeContinue, (0, 0))
+# class WinPage(object):
+#     def __init__(self):
+#         # self.beforeStart = []
+#         # for i in range(1,11):
+#         #     self.beforeStart.append(pygame.image.load("../resources/img/beforeStart_"+str(i)+".jpg"))
+#         # self.beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
+#         self.beforeContinue = pygame.image.load("../resources/img/test.jpg").convert_alpha()
+#         self.afterContinue = pygame.image.load("../resources/img/test.jpg").convert_alpha()
+#
+#     def isFocus(self):
+#         point_x, point_y = pygame.mouse.get_pos()
+#         if (220 < point_x < 380) and (293 < point_y < 333):
+#             return True
+#         else:
+#             return False
+#     def display(self):
+#         if self.isFocus():
+#             surface.blit(self.afterContinue, (0, 0))
+#         else:
+#             surface.blit(self.beforeContinue, (0, 0))
 
 #============操控行为方法================
 # def arrive(source,destination):
@@ -789,7 +789,7 @@ def borderLimit(eneity):
 
 #=======================事件监听方法=====================
 def eventListener():
-    global pressedKey,gameMode,startPage,pause,winPage   #按键信息
+    global pressedKey,gameMode,startPage,pause   #按键信息
     for event in pygame.event.get():
         if event.type == QUIT:
             exit()
@@ -799,7 +799,7 @@ def eventListener():
                 player.fire()
             if left == 1 and gameMode == False and startPage.isFocus():
                 gameMode = True
-            if left == 1 and gameMode == False and winPage.isFocus():
+            if left == 1 and gameMode == False:
                 gameMode = True
 
         if event.type == KEYDOWN:
@@ -844,7 +844,7 @@ def getList(Tlist,Tarray):
         i+=1
 #=========================初始化方法==========================
 def init():
-    global surface,clock,player,background,tank1,tank2,tank3,startPage,winPage,pauseBackground,overImg,enemies,myfont ,winImg  #,textSurface,fenshu
+    global surface,clock,player,background,tank1,tank2,tank3,startPage,pauseBackground,overImg,enemies,myfont ,winImg  #,textSurface,fenshu
     surface = pygame.display.set_mode((surface_WIDTH, surface_HEIGHT), 0, 32)
     myfont=pygame.font.SysFont("../resources/font/consola.ttf",28)#字体设置
     # textSurface=myfont.render("分数：%d"%fenshu,True,(255,255,255))
@@ -866,7 +866,7 @@ def init():
     bat.append(Battery(480, 180,level))
     # enemy = Enemy(400,300)
     startPage = StartPage()
-    winPage = WinPage()
+    # winPage = WinPage()
     i = 1
     # 获取墙图片
     while i <= wallNum:
@@ -1228,7 +1228,7 @@ tankNum=2       #坦克总数
 gameCount = 0
 player=None     #玩家
 startPage = None
-winPage=None
+# winPage=None
 isGameOver = False #玩家是否存活
 winTheGame=False
 mapList = None #地图表
@@ -1312,6 +1312,7 @@ while True:
 
     if winTheGame:
         bat.clear()
+        enemies.clear()
         #hpPackages.clear()
         #superBulletPackages.clear()
         gameMode = True
@@ -1327,6 +1328,7 @@ while True:
 
     elif isGameOver:
         bat.clear()
+        enemies.clear()
         hpPackages.clear()
         superBulletPackages.clear()
         # for i in range(1,180):
