@@ -807,7 +807,7 @@ def eventListener():
                 player.fire()
             if event.key == K_k:
                 player.fire1()
-            if event.key == K_p:
+            if event.key == K_SPACE:
                 pause=True
                 gamePause()
             # if event.key == K_k:
@@ -884,7 +884,7 @@ def gamePause():
             if event.type == QUIT:
                 exit()
             if event.type == KEYDOWN:
-                if event.key == K_p:
+                if event.key == K_SPACE:
                     pause=False
             if event.type == MOUSEBUTTONDOWN:  # 按下鼠标触发
                 left, wheel, right = pygame.mouse.get_pressed()
