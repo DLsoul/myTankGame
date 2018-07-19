@@ -144,7 +144,9 @@ class Player(GameObject):
 
     def hurt(self,bullet):
         global isGameOver
-        if gameCount>=120:
+        if winTheGame or gameCount < 120:
+            self.life -= 0
+        else:
             self.life -= bullet.damage
             if self.life <= 0:
                 self.isAlive = False
@@ -236,8 +238,8 @@ class Battery(GameObject):
         super().__init__()
         self.direction = 1
         self.isAlive=True
-        self.life=5
-        self.sprite=pygame.image.load("../resources/img/炮台.png")   #装载炮台图片
+        self.life=20
+        self.sprite=pygame.image.load("../resources/img/turret.png")   #装载炮台图片
         self.x=x
         self.y=y
         self.lifeFrame = pygame.image.load("../resources/img/blood.png")  # 血条
@@ -269,10 +271,10 @@ class Battery(GameObject):
         if self.life > 0:
             pygame.draw.rect(surface, (255, 0, 0),
                              (self.x - self.width + 39.8, self.y - self.height + 35,
-                              1425 * self.life / 140, 5))
+                              285 * self.life / 140, 5))
             surface.blit(self.sprite, (self.x, self.y))
         else:
-            surface.blit(self.sprite, (420, 120))
+            surface.blit(self.sprite, (440, 120))
     def fire(self):
         batteryDir=Vector2(player.x-self.x,player.y-self.y)
 
@@ -384,7 +386,7 @@ class Missile(Bullet):
     def __init__(self, x, y, width, height, direction,battaryDir):
         self.direction = direction
         self.isAlive = True
-        self.damage = 2
+        self.damage = 1
         self.width=40
         self.height=40
         self.xSpeed = 3
@@ -856,7 +858,7 @@ def init():
     # beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
     # afterStart = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
     overImg = pygame.image.load("../resources/img/fail.png").convert_alpha()
-    winImg = pygame.image.load("../resources/img/胜利.png").convert_alpha()
+    winImg = pygame.image.load("../resources/img/victory.png").convert_alpha()
     clock = pygame.time.Clock()
     player = Player(80, 240)
     bat.append(Battery(480, 180))
@@ -911,6 +913,8 @@ def randomMap():
 #=========================总更新方法======================
 def update():
     cloud_update()
+    for b in bat:
+        b.update()
     if not isGameOver:
         player.update()
     for enemy in enemies:
@@ -919,8 +923,6 @@ def update():
     bulletsUpdate()
     superBulletsUpdate()
     blocksUpdate()
-    for b in bat:
-        b.update()
     missileUpdate()
     for b in bat:
         missileLaunch(player, b)
@@ -931,6 +933,8 @@ def display():
     surface.blit(background, (0, 0))
     for mps in mapList:
         mps.display()
+    for b in bat:
+        b.display()
     if not isGameOver:
         player.display()
         for bullet in playerBullets:
@@ -939,8 +943,6 @@ def display():
         bullet.display()
     for missile in batBullets:
         missile.display()
-    for b in bat:
-        b.display()
     for bullet in enemyBullets:
         bullet.display()
     for enemy in enemies:
@@ -1120,6 +1122,8 @@ def startGame():
     randomDir = random.randint(1, 4)
     mapArrayIndex = randomMap()
     mapArrayIndex[6][2] = 0
+    mapArrayIndex[4][12] = 0
+    mapArrayIndex[5][12] = 0
     mapList = []  # 地图表，存储障碍物精灵图片
     # init()  # 初始化
     getList(mapList, mapArrayIndex)  # 根据障碍物位置信息填写地图表
@@ -1224,6 +1228,7 @@ isGameOver = False #玩家是否存活
 winTheGame=False
 mapList = None #地图表
 gameOverCount = 0 #
+winGameCount = 0
 mapArrayIndex = None
 firstStage=True
 #障碍物位置信息  15*10
@@ -1289,18 +1294,10 @@ while True:
     #     print(mp)
 
     if(gameMode == False):
-        if winTheGame:
-            delay+=1
-            if delay<=120:
-                winPage.display()
-            else:
-                winTheGame = False
-                gameMode = True
-                delay=0
-                startGame()
-        elif firstStage==True:
-            startPage.display()
-
+        # if winTheGame:
+        #     winPage.display()
+        # else:
+        startPage.display()
     else:
         update()
         display()
@@ -1308,9 +1305,27 @@ while True:
     #     surface.blit(winImg, (0, 0))
     # if winTheGame:
     #     if winPage.isf
-    if isGameOver:
+
+    if winTheGame:
+        bat.clear()
+        hpPackages.clear()
+        superBulletPackages.clear()
+        gameMode = True
+        surface.blit(winImg, (0, 0))
+        winGameCount += 1
+        if winGameCount > 70:
+            winTheGame = False
+            gameMode = False
+            winGameCount = 0
+            startGame()
+
+    elif isGameOver:
+        bat.clear()
+        hpPackages.clear()
+        superBulletPackages.clear()
         # for i in range(1,180):
         # surface.blit(overImg, (215, 125))
+        gameMode = True
         surface.blit(overImg, (0, 0))
         gameOverCount += 1
         if gameOverCount > 70:
