@@ -238,7 +238,7 @@ class Battery(GameObject):
         super().__init__()
         self.direction = 1
         self.isAlive=True
-        self.life=5
+        self.life=20
         self.sprite=pygame.image.load("../resources/img/turret.png")   #装载炮台图片
         self.x=x
         self.y=y
@@ -271,10 +271,10 @@ class Battery(GameObject):
         if self.life > 0:
             pygame.draw.rect(surface, (255, 0, 0),
                              (self.x - self.width + 39.8, self.y - self.height + 35,
-                              1425 * self.life / 140, 5))
+                              285 * self.life / 140, 5))
             surface.blit(self.sprite, (self.x, self.y))
         else:
-            surface.blit(self.sprite, (420, 120))
+            surface.blit(self.sprite, (440, 120))
     def fire(self):
         batteryDir=Vector2(player.x-self.x,player.y-self.y)
 
@@ -1306,6 +1306,9 @@ while True:
     #     if winPage.isf
 
     if winTheGame:
+        bat.clear()
+        hpPackages.clear()
+        superBulletPackages.clear()
         gameMode = True
         surface.blit(winImg, (0, 0))
         winGameCount += 1
@@ -1316,6 +1319,9 @@ while True:
             startGame()
 
     elif isGameOver:
+        bat.clear()
+        hpPackages.clear()
+        superBulletPackages.clear()
         # for i in range(1,180):
         # surface.blit(overImg, (215, 125))
         gameMode = True
