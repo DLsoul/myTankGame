@@ -914,7 +914,7 @@ def randomMap():
     return generatedMap
 #=========================总更新方法======================
 def update():
-    cloud_update()
+    cloudUpdate()
     for b in bat:
         b.update()
     if not isGameOver:
@@ -1146,7 +1146,7 @@ def blocksUpdate():
     # for blk in need_remove:
     #     mapList.remove(blk)
 
-def cloud_update():
+def cloudUpdate():
     global cloud_time
     need_remove = []
     need_remove1 = []
@@ -1165,13 +1165,12 @@ def cloud_update():
         clouds.remove(cld)
     for cld1 in need_remove1:
         clouds1.remove(cld1)
-    if gameCount % cloud_time == 0:
-        cloud_time = random.randint(1, 4) * 50
-        if len(clouds)<=3:
+    if len(clouds) < 4:
+        if gameCount % 180 == 0:
             c = Cloud()
-            c1= Cloud()
-            c1.x=c.x+30
-            c1.y=c.y+30
+            c1 = Cloud()
+            c1.x = c.x + 30
+            c1.y = c.y + 30
             # if c.x_speed>0:
             #     c1.x_speed=c.x_speed-1
             # else:
@@ -1180,9 +1179,9 @@ def cloud_update():
             #     c1.y_speed=c.y_speed-1
             # else:
             #     c1.y_speed = c.y_speed + 1
-            i=random.randint(1, 3)
-            c.sprite=pygame.image.load("../resources/img/cloud_%d.png" % (i)).convert_alpha()
-            c1.sprite=pygame.image.load("../resources/img/cloud_%d.png" % (i+3)).convert_alpha()
+            i = random.randint(1, 3)
+            c.sprite = pygame.image.load("../resources/img/cloud_%d.png" % (i)).convert_alpha()
+            c1.sprite = pygame.image.load("../resources/img/cloud_%d.png" % (i + 3)).convert_alpha()
             clouds1.append(c1)
             clouds.append(c)
 
