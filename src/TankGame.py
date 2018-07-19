@@ -253,8 +253,8 @@ class Battery(GameObject):
 
                 self.isAlive = False
                 bat.remove(self)
-                winTheGame=True# 遊戲勝利
                 gameMode = False
+                winTheGame=True# 遊戲勝利
                 self.boom_index = len(self.boom_img) - 1
             self.sprite = self.boom_img[self.boom_index]
             # print(game_count)
@@ -265,7 +265,7 @@ class Battery(GameObject):
         if self.life > 0:
             pygame.draw.rect(surface, (255, 0, 0),
                              (self.x - self.width + 39.8, self.y - self.height + 35,
-                              285 * self.life / 140, 5))
+                              1425 * self.life / 140, 5))
             surface.blit(self.sprite, (self.x, self.y))
         else:
             surface.blit(self.sprite, (420, 120))
