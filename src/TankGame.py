@@ -234,11 +234,12 @@ class Player(GameObject):
 
 #==========================炮台============================
 class Battery(GameObject):
-    def __init__(self,x,y):
+    def __init__(self,x,y,level):
         super().__init__()
+        self.level=level
         self.direction = 1
         self.isAlive=True
-        self.life=20
+        self.life=18+3*self.level
         self.sprite=pygame.image.load("../resources/img/turret.png")   #装载炮台图片
         self.x=x
         self.y=y
@@ -408,16 +409,17 @@ class Missile(Bullet):
 
 #========================敌人类=====================
 class Enemy(GameObject):
-    def __init__(self,x,y):
+    def __init__(self,x,y,level):
         super().__init__()
         super().setImage("../resources/img/tank_2.png")
+        self.level=level
         self.x = x
         self.y = y
         # self.direction=Vector2(0,-1)
         self.direction = 1  # 坦克朝向 1上2右3下4左
         self.needMove = False
-        self.speed = 50
-        self.life = 5
+        self.speed = 40+10*self.level
+        self.life = 4+self.level
         self.patrolPath=[]
         self.lifeFrame = pygame.image.load("../resources/img/blood.png")
         self.randomDir = 1
@@ -729,8 +731,8 @@ class WinPage(object):
         # for i in range(1,11):
         #     self.beforeStart.append(pygame.image.load("../resources/img/beforeStart_"+str(i)+".jpg"))
         # self.beforeStart = pygame.image.load("../resources/img/beforeStart.jpg").convert_alpha()
-        self.beforeContinue = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
-        self.afterContinue = pygame.image.load("../resources/img/afterStart.jpg").convert_alpha()
+        self.beforeContinue = pygame.image.load("../resources/img/test.jpg").convert_alpha()
+        self.afterContinue = pygame.image.load("../resources/img/test.jpg").convert_alpha()
 
     def isFocus(self):
         point_x, point_y = pygame.mouse.get_pos()
@@ -861,7 +863,7 @@ def init():
     winImg = pygame.image.load("../resources/img/victory.png").convert_alpha()
     clock = pygame.time.Clock()
     player = Player(80, 240)
-    bat.append(Battery(480, 180))
+    bat.append(Battery(480, 180,level))
     # enemy = Enemy(400,300)
     startPage = StartPage()
     winPage = WinPage()
@@ -954,7 +956,8 @@ def display():
          cld.display()
 
     surface.blit(myfont.render("score:%d" % score, True, (255, 255, 255)),(0,0))
-    surface.blit(myfont.render(u"superBullet:%d"%superBulletNum,True,(255,255,255)),(0,30))
+    surface.blit(myfont.render("level:%d" % level, True, (255, 255, 255)), (0, 30))
+    surface.blit(myfont.render(u"superBullet:%d"%superBulletNum,True,(255,255,255)),(0,60))
 
 def bulletsUpdate():
     needRemove = []
@@ -1029,11 +1032,12 @@ def playerCrashBlock():
             player.isCrash(blk)
 
 def missileLaunch(player,bat): #导弹发射策略
+    global level
     dis_x=bat.x-player.x
     dis_y=bat.y-player.y
     dis_s=math.sqrt(dis_x**2+dis_y**2)
     if dis_s<700:
-         if gameCount%300==0:
+         if gameCount%(310-10*level)==0:
             bat.fire()
             # print("炮台开火")
 
@@ -1116,7 +1120,8 @@ def packageCrash():
 # 真正的初始化
 def startGame():
     global gameCount,mapList,randomDir,mapArrayIndex,score
-    score = 0
+    if firstLevel:
+        score = 0
     init()
 
     randomDir = random.randint(1, 4)
@@ -1230,6 +1235,7 @@ mapList = None #地图表
 gameOverCount = 0 #
 winGameCount = 0
 mapArrayIndex = None
+firstLevel=True
 #障碍物位置信息  15*10
 # mapArrayIndex=[
 #     [0,1,0,0,0,4,0,2,0,0,0,3,2,0,0,0],
@@ -1255,16 +1261,15 @@ mapArrayIndex = None
 #     print(mps)
 # gameCount = 0
 # showGame()
-
+level=1
 startGame()
-
 # showGame()
 pause=False
 
 while True:
     if gameCount%120==0:
         while (len(enemies) < 3):
-            enemy = Enemy(random.randint(10,14)*40,random.randint(4,6)*40)
+            enemy = Enemy(random.randint(10,14)*40,random.randint(4,6)*40,level)
             mapArrayIndex[enemy.y//40][enemy.x//40] = 0
             enemies.append(enemy)
 
@@ -1292,7 +1297,7 @@ while True:
     #     mps.drawWall(surface)
     #     print(mp)
 
-    if(gameMode == False):
+    if(gameMode == False and firstLevel==True):
         # if winTheGame:
         #     winPage.display()
         # else:
@@ -1307,12 +1312,14 @@ while True:
 
     if winTheGame:
         bat.clear()
-        hpPackages.clear()
-        superBulletPackages.clear()
+        #hpPackages.clear()
+        #superBulletPackages.clear()
         gameMode = True
         surface.blit(winImg, (0, 0))
         winGameCount += 1
         if winGameCount > 70:
+            level+=1
+            firstLevel=False
             winTheGame = False
             gameMode = False
             winGameCount = 0
@@ -1327,8 +1334,10 @@ while True:
         gameMode = True
         surface.blit(overImg, (0, 0))
         gameOverCount += 1
+        level=1
         if gameOverCount > 70:
             gameMode = False
+            firstLevel=True
             isGameOver = False
             gameOverCount = 0
             startGame()
